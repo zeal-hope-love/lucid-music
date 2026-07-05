@@ -1,0 +1,12 @@
+{
+  name: 'search',
+  version: '1.0.0',
+  description: '搜索音乐源',
+  main: 'Index.ets',
+  author: '',
+  license: '',
+  dependencies: {
+    musicbasic: 'file:../../common/musicbasic',
+    player: 'file:../player',
+  },
+}

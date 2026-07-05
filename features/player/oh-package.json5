@@ -1,0 +1,12 @@
+{
+  name: 'player',
+  version: '1.0.0',
+  description: '播放器核心模块',
+  main: 'Index.ets',
+  author: '',
+  license: '',
+  dependencies: {
+    musicbasic: 'file:../../common/musicbasic',
+    jsaudioengine: 'file:../../js_audio_engine',
+  },
+}

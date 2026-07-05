@@ -1,10 +1,11 @@
 /node_modules
 /oh_modules
+oh_modules
 /local.properties
 /.idea
 **/build
 /.hvigor
-.cxx
+**/.cxx
 /.clangd
 /.clang-format
 /.clang-tidy

@@ -1,0 +1,13 @@
+{
+  name: 'home',
+  version: '1.0.0',
+  description: '首页推荐',
+  main: 'Index.ets',
+  author: '',
+  license: '',
+  dependencies: {
+    musicbasic: 'file:../../common/musicbasic',
+    search: 'file:../search',
+    player: 'file:../player',
+  },
+}

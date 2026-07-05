@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "jsaudioengine",
+    "type": "har",
+    "description": "JSVM audio source execution engine",
+    "deviceTypes": [
+      "phone",
+      "tablet",
+      "2in1"
+    ]
+  }
+}

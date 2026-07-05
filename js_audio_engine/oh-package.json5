@@ -1,0 +1,9 @@
+{
+  "name": "jsaudioengine",
+  "version": "1.0.0",
+  "description": "JSVM audio source execution engine",
+  "main": "Index.ets",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}

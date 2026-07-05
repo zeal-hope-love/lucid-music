@@ -1,0 +1,34 @@
+{
+	"app": {
+		"bundleName": "me.zeal_hope_love.lucid_music",
+		"debug": true,
+		"versionCode": 1000000,
+		"versionName": "1.0.0",
+		"minAPIVersion": 60100023,
+		"targetAPIVersion": 260000026,
+		"apiReleaseType": "Beta1",
+		"targetMinorAPIVersion": 0,
+		"targetPatchAPIVersion": 0,
+		"compileSdkVersion": "26.0.0.23",
+		"compileSdkType": "HarmonyOS",
+		"minMinorAPIVersion": 0,
+		"minPatchAPIVersion": 0,
+		"appEnvironments": [],
+		"bundleType": "app",
+		"buildMode": "debug"
+	},
+	"module": {
+		"name": "mine",
+		"type": "har",
+		"deviceTypes": [
+			"default",
+			"tablet",
+			"2in1",
+			"car",
+			"wearable",
+			"tv"
+		],
+		"packageName": "mine",
+		"installationFree": false
+	}
+}
