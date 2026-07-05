@@ -1,11 +1,17 @@
 {
   "name": "entry",
   "version": "1.0.0",
-  "description": "Please describe the basic information.",
+  "description": "Lucid Music 主入口",
   "main": "",
   "author": "",
   "license": "",
   "dependencies": {
-    "libentry.so": "file:./src/main/cpp/types/libentry"
+    "libentry.so": "file:./src/main/cpp/types/libentry",
+    "musicbasic": "file:../common/musicbasic",
+    "player": "file:../features/player",
+    "search": "file:../features/search",
+    "home": "file:../features/home",
+    "musichall": "file:../features/musichall",
+    "mine": "file:../features/mine"
   }
 }

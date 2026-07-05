@@ -1,6 +1,20 @@
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\PoXia\\.ohos\\config\\default_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BADDE0B7E8CEFCCEFF673389CF16FEE22CDCEEAD8746441E74E85E809C4AEAF17F106625DD7E109",
+          "profile": "C:\\Users\\PoXia\\.ohos\\config\\default_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\PoXia\\.ohos\\config\\default_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.p12",
+          "storePassword": "0000001B2776EF9A347A54B41952207C1E750C8FF92DEC6E3732B3EB9554E46A36E6D6774DE70CC8C6CBB4"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",
@@ -19,7 +33,7 @@
     ],
     "buildModeSet": [
       {
-        "name": "debug",
+        "name": "debug"
       },
       {
         "name": "release"
@@ -30,6 +44,82 @@
     {
       "name": "entry",
       "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "musicbasic",
+      "srcPath": "./common/musicbasic"
+    },
+    {
+      "name": "jsaudioengine",
+      "srcPath": "./js_audio_engine",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "player",
+      "srcPath": "./features/player",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "search",
+      "srcPath": "./features/search",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "home",
+      "srcPath": "./features/home",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "musichall",
+      "srcPath": "./features/musichall",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mine",
+      "srcPath": "./features/mine",
       "targets": [
         {
           "name": "default",
