@@ -1,5 +1,7 @@
 export { dispatchShellPlaybackIntent } from './src/main/ets/service/PlaybackIntentDispatcher'
 export { JsVmBridge } from './src/main/ets/service/JsVmBridge'
 export { MediaService } from './src/main/ets/service/MediaService'
+export { PlayerViewModel } from './src/main/ets/viewmodel/PlayerViewModel'
+export { PlayerConstants } from './src/main/ets/constant/PlayerConstants'
 export { PlaybackPage } from './src/main/ets/view/PlaybackPage'
 export { PlaybackPageCoverContent } from './src/main/ets/view/PlaybackPageCoverContent'
