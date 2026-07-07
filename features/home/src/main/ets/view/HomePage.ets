@@ -1,125 +1,72 @@
 /*
- * Lucid Music - 首页 (含搜索一镜到底转场)
+ * Lucid Music - 首页
+ * 布局：左上标题 + 光感搜索框（一镜到底锚点）
  */
-import { curves } from '@kit.ArkUI';
-import { hdsMaterial, HdsNavDestination, ScrollEffectType } from '@kit.UIDesignKit';
+import { AppStorageV2, display } from '@kit.ArkUI'
+import {
+  AppStorageKeys, MusicAppState, PlaybackIntentState, PlaybackShellConstants
+} from 'musicbasic'
+import { SearchInputArea } from 'musicbasic'
+import { dispatchShellPlaybackIntent } from 'player'
 
-// [Start set_geometry_transition]
-@Component
+@ComponentV2
 export struct HomePage {
-  @State isSearching: boolean = false;
-  @State transitionEffect: TransitionEffect = TransitionEffect.IDENTITY;
-  private pageInfos: NavPathStack = new NavPathStack();
+  @Param @Require currentTab: number
+  @Param @Require isSearchOverlayShowing: boolean
+  @Event onSearchClick: () => void = () => {}
+
+  @Local appState: MusicAppState =
+    AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!
+  @Local intentState: PlaybackIntentState =
+    AppStorageV2.connect(PlaybackIntentState, AppStorageKeys.PLAYBACK_INTENT_STATE, () => new PlaybackIntentState())!
+
+  @Computed
+  get screenWidth(): number {
+    try {
+      const d = display.getDefaultDisplaySync()
+      return Math.round(d.width * 160 / d.densityDPI)
+    } catch (_) {
+      return 360
+    }
+  }
+
+  @Monitor('intentState.requestVersion')
+  onPlaybackIntentChanged(): void {
+    dispatchShellPlaybackIntent(this.appState, this.intentState, () => {
+      this.getUIContext().animateTo({
+        duration: PlaybackShellConstants.OPEN_PLAYER_UI_ANIMATION_MS,
+        curve: Curve.EaseInOut
+      }, () => { this.appState.isShowPlay = true })
+    })
+  }
 
   build() {
-    Stack() {
-      // 搜索详情页 — HdsNavDestination + systemMaterialEffect 沉浸光感
-      if (this.isSearching) {
-        HdsNavDestination() {
-          Column() {
-            Row({ space: 8 }) {
-              Search({ placeholder: 'DevEco Studio' })
-                .height(40)
-                .placeholderColor($r('sys.color.mask_secondary'))
-                .width('100%')
-                .backgroundColor('#0D000000')
-                .geometryTransition('SEARCH_ONE_SHOT_DEMO_TRANSITION_ID')
-                .transition(TransitionEffect.opacity(0.99))
-                .defaultFocus(true)
-                .focusOnTouch(true)
-            }
-            .width('100%')
-            .height(55)
-            .alignItems(VerticalAlign.Center)
-            .padding({ top: 16, bottom: 16, left: 65, right: 20 })
-          }
-          .size({ width: '100%', height: '100%' })
-        }
-        .transition(TransitionEffect.OPACITY)
-        .backgroundColor('#F1F3F5')
-        .titleBar({
-          content: {
-            title: { mainTitle: '' },
-            backIcon: {
-              action: () => {
-                this.onBackClicked();
-              }
-            }
-          },
-          style: {
-            systemMaterialEffect: {
-              materialType: hdsMaterial.MaterialType.ADAPTIVE,
-              materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-            },
-            scrollEffectOpts: {
-              enableScrollEffect: true,
-              scrollEffectType: ScrollEffectType.GRADIENT_BLUR
-            }
+    Column({ space: 24 }) {
+      Row() {
+        Text('首页')
+          .fontSize(28)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.ohos_id_color_text_primary'))
+      }
+      .width('90%')
+      .margin({ top: 16 })
+
+      // 光感搜索框（覆盖层显示时隐藏，触发一镜到底转场）
+      if (!this.isSearchOverlayShowing) {
+        SearchInputArea({
+          barWidth: this.screenWidth * 0.9,
+          isFollow: true,
+          placeholder: '搜歌曲、歌手、专辑',
+          onTap: (): void => {
+            this.onSearchClick()
           }
         })
-        .hideBackButton(false)
-        .onReady((context: NavDestinationContext) => {
-          this.pageInfos = context.pathStack;
-        })
-        .onBackPressed(() => {
-          this.getUIContext().animateTo({
-            curve: curves.interpolatingSpring(0, 1, 342, 38),
-          }, () => {
-            this.isSearching = false;
-          })
-          return true;
-        })
+        .width('90%')
       }
 
-      // 首页内容
-      if (!this.isSearching) {
-        Column({ space: 20 }) {
-          // [Start Search_start]
-          Search({ placeholder: 'Search' })
-            .height(40)
-            .placeholderColor($r('sys.color.mask_secondary'))
-            .width('100%')
-            .geometryTransition('SEARCH_ONE_SHOT_DEMO_TRANSITION_ID', { follow: true })
-            .backgroundColor('#0D000000')
-            .defaultFocus(false)
-            .focusOnTouch(false)
-            .focusable(false)
-            // [End Search_start]
-            .onTouch((event: TouchEvent) => {
-              if (event.type === TouchType.Up) {
-                this.showSearchPage();
-              }
-            })
-
-          Text('Lucid Music')
-            .fontSize(28)
-            .fontWeight(FontWeight.Bold)
-        }
-        .size({ width: '90%', height: '100%' })
-        .backgroundColor('#F1F3F5')
-      }
+      Blank()
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F1F3F5')
-  }
-
-  // [Start showSearchPage_start]
-  private showSearchPage(): void {
-    this.getUIContext().animateTo({
-      curve: curves.interpolatingSpring(0, 1, 342, 38)
-    }, () => {
-      this.isSearching = true;
-    })
-  }
-  // [End showSearchPage_start]
-
-  private onBackClicked(): void {
-    this.getUIContext().animateTo({
-      curve: curves.interpolatingSpring(0, 1, 342, 38)
-    }, () => {
-      this.isSearching = false;
-    })
   }
 }
-// [End set_geometry_transition]

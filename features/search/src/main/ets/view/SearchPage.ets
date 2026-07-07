@@ -1,79 +1,225 @@
 /*
- * Lucid Music - 搜索页面 (一镜到底目标页)
+ * Lucid Music - 搜索页（覆盖层）
+ * 三态切换：初始态（热门+历史）→ 输入态（联想建议）→ 结果态（跳转结果页）
  */
-import { curves } from '@kit.ArkUI';
-import { SearchPageExtraInfo } from 'musicbasic';
+import { display } from '@kit.ArkUI'
+import {
+  AppStorageKeys, MusicAppState, PlaybackIntentState, PlaybackShellConstants
+} from 'musicbasic'
+import { AppStorageV2 } from '@kit.ArkUI'
+import { SearchInputArea } from 'musicbasic'
+import { SearchViewModel, SearchState } from '../viewmodel/SearchViewModel'
+import { SuggestionItem, SuggestionType } from '../model/SuggestionItem'
+import { dispatchShellPlaybackIntent } from 'player'
 
-// [Start bind_id]
-@Component
+@ComponentV2
 export struct SearchPage {
-  @Prop param: SearchPageExtraInfo = new SearchPageExtraInfo();
-  private pageInfos: NavPathStack = new NavPathStack();
+  @Event onClose: () => void = () => {}
+  @Event onResult?: (keyword: string) => void
 
-  build() {
-    NavDestination() {
-      Column() {
-        Row({ space: 8 }) {
-          Image($r('app.media.startIcon'))
-            .width(40)
-            .height(40)
-            .borderRadius(20)
-            .onClick(() => {
-              this.onArrowClicked();
+  @Local viewModel: SearchViewModel = new SearchViewModel()
+  @Local appState: MusicAppState =
+    AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!
+  @Local intentState: PlaybackIntentState =
+    AppStorageV2.connect(PlaybackIntentState, AppStorageKeys.PLAYBACK_INTENT_STATE, () => new PlaybackIntentState())!
+
+  @Computed
+  get screenWidth(): number {
+    try {
+      const d = display.getDefaultDisplaySync()
+      return Math.round(d.width * 160 / d.densityDPI)
+    } catch (_) {
+      return 360
+    }
+  }
+
+  @Monitor('intentState.requestVersion')
+  onPlaybackIntentChanged(): void {
+    dispatchShellPlaybackIntent(this.appState, this.intentState, () => {
+      this.appState.isShowPlay = true
+    })
+  }
+
+  @Builder
+  hotSearchContent(): void {
+    Column({ space: 20 }) {
+      if (this.viewModel.hotSearches.length > 0) {
+        Column({ space: 12 }) {
+          Row() {
+            Text('热门搜索')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('sys.color.ohos_id_color_text_primary'))
+          }
+          .width('100%')
+
+          Flex({ wrap: FlexWrap.Wrap }) {
+            ForEach(this.viewModel.hotSearches, (hotWord: string) => {
+              Text(hotWord)
+                .fontSize(14)
+                .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+                .padding({ left: 14, right: 14, top: 8, bottom: 8 })
+                .backgroundColor('#0D000000')
+                .borderRadius(16)
+                .margin({ right: 10, bottom: 10 })
+                .onClick(() => {
+                  this.viewModel.updateKeyword(hotWord)
+                  const kw = this.viewModel.doSearch(hotWord)
+                  if (kw) {
+                    this.onResult?.(kw)
+                  }
+                })
             })
-            .transition(TransitionEffect.asymmetric(
-              TransitionEffect.OPACITY
-                .animation({ duration: 200, delay: 150, curve: curves.cubicBezierCurve(0.33, 0, 0.67, 1) }),
-              TransitionEffect.OPACITY
-                .animation({ duration: 200, curve: curves.cubicBezierCurve(0.33, 0, 0.67, 1) })
-            ))
-
-          Search({ placeholder: 'DevEco Studio' })
-            .height(40)
-            .placeholderColor($r('sys.color.mask_secondary'))
-            .width('85%')
-            .backgroundColor('#0D000000')
-            .height(40)
-            // bind geometry id — 目标页搜索框设为"锚点"
-            .geometryTransition('SEARCH_ONE_SHOT_DEMO_TRANSITION_ID')
-            .transition(TransitionEffect.opacity(0.99))
-            .defaultFocus(true)
-            .focusOnTouch(true)
+          }
         }
         .width('100%')
-        .height(50)
-        .alignItems(VerticalAlign.Center)
-        .padding(16)
       }
-      .size({
-        width: '100%',
-        height: '100%'
-      })
-      .margin({ top: 16 })
+
+      if (this.viewModel.searchHistory.length > 0) {
+        Column({ space: 12 }) {
+          Row() {
+            Text('搜索历史')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('sys.color.ohos_id_color_text_primary'))
+            Blank()
+            SymbolGlyph($r('sys.symbol.trash_fill'))
+              .fontSize(18)
+              .fontColor([$r('sys.color.ohos_id_color_text_tertiary')])
+              .onClick(() => {
+                this.viewModel.clearHistory()
+              })
+          }
+          .width('100%')
+
+          Flex({ wrap: FlexWrap.Wrap }) {
+            ForEach(this.viewModel.searchHistory, (historyWord: string) => {
+              Text(historyWord)
+                .fontSize(14)
+                .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+                .padding({ left: 14, right: 14, top: 8, bottom: 8 })
+                .backgroundColor('#0D000000')
+                .borderRadius(16)
+                .margin({ right: 10, bottom: 10 })
+                .onClick(() => {
+                  this.viewModel.updateKeyword(historyWord)
+                  const kw = this.viewModel.doSearch(historyWord)
+                  if (kw) {
+                    this.onResult?.(kw)
+                  }
+                })
+            })
+          }
+        }
+        .width('100%')
+      }
     }
-    .transition(TransitionEffect.OPACITY)
-    .hideTitleBar(true)
-    .backgroundColor('#F1F3F5')
-    .onReady((context: NavDestinationContext) => {
-      this.pageInfos = context.pathStack;
-    })
-    .onBackPressed(() => {
-      this.getUIContext().animateTo({
-        curve: curves.interpolatingSpring(0, 1, 342, 38),
-      }, () => {
-        this.pageInfos.pop(false);
-      })
-      return true;
-    })
+    .width('90%')
   }
 
-  // 返回按钮 — 弹簧曲线反向转场
-  private onArrowClicked(): void {
-    this.getUIContext().animateTo({
-      curve: curves.interpolatingSpring(0, 1, 342, 38)
-    }, () => {
-      this.pageInfos.pop(false);
-    })
+  @Builder
+  suggestionContent(): void {
+    Column() {
+      ForEach(this.viewModel.suggestions, (item: SuggestionItem) => {
+        Column() {
+          Row({ space: 12 }) {
+            // 类型图标
+            SymbolGlyph(this.getSuggestionIcon(item.type))
+              .fontSize(18)
+              .fontColor([$r('sys.color.ohos_id_color_text_tertiary')])
+
+            Text(item.text)
+              .fontSize(15)
+              .fontColor($r('sys.color.ohos_id_color_text_primary'))
+              .layoutWeight(1)
+          }
+          .width('100%')
+          .height(48)
+          .padding({ left: 12, right: 12 })
+          .onClick(() => {
+            const kw = this.viewModel.doSearch(item.text)
+            if (kw) {
+              this.onResult?.(kw)
+            }
+          })
+
+          Divider()
+            .strokeWidth(0.5)
+            .color('#1A000000')
+            .width('100%')
+        }
+      })
+    }
+    .width('90%')
+    .margin({ top: 8 })
+  }
+
+  /** 获取建议类型对应的图标资源 */
+  private getSuggestionIcon(type: SuggestionType): Resource {
+    if (type === SuggestionType.ARTIST) {
+      return $r('sys.symbol.person_crop_circle_fill_1')
+    } else {
+      return $r('sys.symbol.music_note_list')
+    }
+  }
+
+  build() {
+    Column() {
+      Row({ space: 8 }) {
+        SymbolGlyph($r('sys.symbol.chevron_left'))
+          .fontSize(24)
+          .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+          .onClick(() => {
+            this.onClose()
+          })
+
+        SearchInputArea({
+          barWidth: this.screenWidth * 0.78,
+          isFollow: false,
+          autoFocus: true,
+          keyword: this.viewModel.keyword,
+          placeholder: '搜歌曲、歌手、专辑',
+          onKeywordChange: (text: string): void => {
+            this.viewModel.updateKeyword(text)
+          },
+          onSearch: (): void => {
+            const kw = this.viewModel.doSearch()
+            if (kw) {
+              this.onResult?.(kw)
+            }
+          },
+          onClear: (): void => {
+            this.viewModel.clear()
+          }
+        })
+        .layoutWeight(1)
+      }
+      .width('100%')
+      .height(56)
+      .alignItems(VerticalAlign.Center)
+      .padding({ left: 8, right: 12 })
+
+      if (this.viewModel.currentState === SearchState.HOT) {
+        Scroll() {
+          this.hotSearchContent()
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .margin({ top: 16 })
+      } else if (this.viewModel.currentState === SearchState.SUGGESTING) {
+        Scroll() {
+          this.suggestionContent()
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .margin({ top: 4 })
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
+    .padding({ bottom: 80 })
   }
 }
-// [End bind_id]

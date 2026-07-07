@@ -79,3 +79,16 @@ export { getResourceString } from './src/main/ets/util/ResourceStringUtil';
 
 export { MusicEmptyComponent } from './src/main/ets/components/MusicEmptyComponent';
 export { MusicTextIcon } from './src/main/ets/components/MusicTextIcon';
+
+// New: 公共 UI 组件
+export { AreaWithHdsTabBar } from './src/main/ets/components/floating/AreaWithHdsTabBar';
+export { LucidTabBar } from './src/main/ets/components/tabbar/LucidTabBar';
+export { MiniPlayerBar } from './src/main/ets/components/miniplayer/MiniPlayerBar';
+export { SearchInputArea } from './src/main/ets/components/search/SearchInputArea';
+
+// New: 平台常量
+export { Platform, PlatformLabels, PlatformColors } from './src/main/ets/constants/Platform';
+
+// New: 工具类
+export { splitHighlightKeyword, trimAndEllipsis } from './src/main/ets/util/StringUtil';
+export { formatDuration } from './src/main/ets/util/TimeUtil';

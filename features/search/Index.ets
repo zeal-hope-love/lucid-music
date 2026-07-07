@@ -2,7 +2,10 @@ export { MusicApiService } from './src/main/ets/service/MusicApiService'
 export { AudioSourceManager } from './src/main/ets/service/AudioSourceManager'
 export { AudioSourceExecutor } from './src/main/ets/service/AudioSourceExecutor'
 export { SearchResultItem } from './src/main/ets/model/SearchResultItem'
-export { SearchViewModel } from './src/main/ets/viewmodel/SearchViewModel'
+export { SuggestionItem, SuggestionType } from './src/main/ets/model/SuggestionItem'
+export { SearchViewModel, SearchState } from './src/main/ets/viewmodel/SearchViewModel'
+export { SearchResultViewModel } from './src/main/ets/viewmodel/SearchResultViewModel'
 export { AudioSourceModel } from './src/main/ets/model/AudioSourceModel'
-// UI - 你需要重写
+// UI
 export { SearchPage } from './src/main/ets/view/SearchPage'
+export { SearchResultPage } from './src/main/ets/view/SearchResultPage'
