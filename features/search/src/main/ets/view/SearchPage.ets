@@ -7,7 +7,7 @@ import {
   AppStorageKeys, MusicAppState, PlaybackIntentState, PlaybackShellConstants
 } from 'musicbasic'
 import { AppStorageV2 } from '@kit.ArkUI'
-import { SearchInputArea } from 'musicbasic'
+import { AreaWithHdsTabBar, SearchInputArea } from 'musicbasic'
 import { SearchViewModel, SearchState } from '../viewmodel/SearchViewModel'
 import { SuggestionItem, SuggestionType } from '../model/SuggestionItem'
 import { dispatchShellPlaybackIntent } from 'player'
@@ -163,16 +163,36 @@ export struct SearchPage {
     }
   }
 
+  @Builder
+  backButtonContent(): void {
+    Row() {
+      SymbolGlyph($r('sys.symbol.chevron_left'))
+        .fontSize(20)
+        .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+        .offset({ y: -2 })        // ← 负数往上，正数往下
+    }
+    .width(40)
+    .height(40)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      this.onClose()
+    })
+  }
+
   build() {
     Column() {
       Row({ space: 8 }) {
-        SymbolGlyph($r('sys.symbol.chevron_left'))
-          .fontSize(24)
-          .fontColor([$r('sys.color.ohos_id_color_text_primary')])
-          .onClick(() => {
-            this.onClose()
-          })
-
+        AreaWithHdsTabBar({
+          barHeight: 40,
+          barWidth: 40,
+          barPlacement: BarPosition.End,
+          bottomMargin: 8,
+          content: (): void => {
+            this.backButtonContent()
+          }
+        })
+          .margin({ top: 0 })   // ← 正数往下，负数往上
         SearchInputArea({
           barWidth: this.screenWidth * 0.78,
           isFollow: false,
@@ -192,6 +212,7 @@ export struct SearchPage {
             this.viewModel.clear()
           }
         })
+          .margin({ top: 0 })  // ← 负数往上
         .layoutWeight(1)
       }
       .width('100%')

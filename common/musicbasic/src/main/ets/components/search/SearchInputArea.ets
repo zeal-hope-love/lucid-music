@@ -20,6 +20,14 @@ export struct SearchInputArea {
 
   @Local inputText: string = this.keyword
 
+  aboutToAppear(): void {
+    if (this.autoFocus) {
+      setTimeout(() => {
+        this.getUIContext().getFocusController().requestFocus('search_text_input')
+      }, 350)
+    }
+  }
+
   @Monitor('keyword')
   onKeywordUpdate(): void {
     this.inputText = this.keyword
@@ -27,29 +35,60 @@ export struct SearchInputArea {
 
   @Builder
   searchContent(): void {
-    Row({ space: 8 }) {
+    Row({ space: 0 }) {
       SymbolGlyph($r('sys.symbol.magnifyingglass'))
         .fontSize(18)
         .fontColor([$r('sys.color.ohos_id_color_text_tertiary')])
-        .margin({ left: 12 })
+        .width(18)
+        .margin({ left: 0, right: 4 })
 
-      TextInput({ text: $$this.inputText, placeholder: this.placeholder })
-        .placeholderColor($r('sys.color.mask_secondary'))
-        .backgroundColor(Color.Transparent)
-        .layoutWeight(1)
-        .height(40)
-        .fontSize(15)
-        .defaultFocus(this.autoFocus)
-        .focusOnTouch(this.autoFocus)
-        .focusable(this.autoFocus)
-        .borderRadius(0)
-        .onChange((value: string) => {
-          this.inputText = value
-          this.onKeywordChange?.(value)
-        })
-        .onSubmit(() => {
-          this.onSearch?.()
-        })
+      // 文字区域
+      Stack({ alignContent: Alignment.Start }) {
+        // 底层：TextInput 做输入，首页隐藏搜索页显示
+        TextInput({ text: $$this.inputText, placeholder: '' })
+          .id('search_text_input')
+          .backgroundColor(Color.Transparent)
+          .width('100%')
+          .height(32)
+          .fontSize(15)
+          .fontColor(Color.Transparent)
+          .defaultFocus(this.autoFocus)
+          .focusOnTouch(this.autoFocus)
+          .focusable(this.autoFocus)
+          .hitTestBehavior(this.autoFocus ? HitTestMode.Default : HitTestMode.None)
+          .borderRadius(0)
+          .padding({ left: 8 })
+          .visibility(this.autoFocus ? Visibility.Visible : Visibility.Hidden)
+          .onChange((value: string) => {
+            this.inputText = value
+            this.onKeywordChange?.(value)
+          })
+          .onSubmit(() => {
+            this.onSearch?.()
+          })
+
+        // 顶层：Text 显示文字，随系统色自适应深浅模式
+        if (this.autoFocus) {
+          // 搜索页：显示输入内容或 placeholder
+          Text(this.inputText || this.placeholder)
+            .fontSize(15)
+            .fontColor(this.inputText ? $r('sys.color.font_primary') : $r('sys.color.ohos_id_color_text_tertiary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .padding({ left: 6 })
+            .hitTestBehavior(HitTestMode.None)
+        } else {
+          // 首页：只显示 placeholder
+          Text(this.placeholder)
+            .fontSize(15)
+            .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .padding({ left: 8 })
+            .hitTestBehavior(HitTestMode.None)
+        }
+      }
+      .layoutWeight(1)
 
       if (this.inputText.length > 0) {
         SymbolGlyph($r('sys.symbol.xmark_circle_fill'))
@@ -63,8 +102,8 @@ export struct SearchInputArea {
       }
     }
     .width('100%')
-    .height(44)
-    .borderRadius(22)
+    .padding({ top: 8, bottom: 8 })
+    .borderRadius(20)
     .onClick(() => {
       this.onTap?.()
     })
@@ -72,10 +111,10 @@ export struct SearchInputArea {
 
   build() {
     AreaWithHdsTabBar({
-      barHeight: 44,
+      barHeight: 40,
       barWidth: this.barWidth,
       barPlacement: BarPosition.End,
-      bottomMargin: 0,
+      bottomMargin: 8,
       content: (): void => { this.searchContent() }
     })
     .geometryTransition('SEARCH_ONE_SHOT_TRANSITION_ID', { follow: this.isFollow })

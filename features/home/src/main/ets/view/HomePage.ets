@@ -41,7 +41,7 @@ export struct HomePage {
   }
 
   build() {
-    Column({ space: 24 }) {
+    Column({ space: 0 }) {
       Row() {
         Text('首页')
           .fontSize(28)
@@ -62,6 +62,7 @@ export struct HomePage {
           }
         })
         .width('90%')
+        .margin({ top: 10 })
       }
 
       Blank()

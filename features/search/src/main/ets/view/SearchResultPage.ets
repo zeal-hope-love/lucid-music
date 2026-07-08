@@ -7,7 +7,7 @@ import { AppStorageV2 } from '@kit.ArkUI'
 import {
   AppStorageKeys, MusicAppState, PlaybackIntentState
 } from 'musicbasic'
-import { SearchInputArea } from 'musicbasic'
+import { AreaWithHdsTabBar, SearchInputArea } from 'musicbasic'
 import { SearchResultViewModel } from '../viewmodel/SearchResultViewModel'
 import { SearchResultItem } from '../model/SearchResultItem'
 import { dispatchShellPlaybackIntent } from 'player'
@@ -123,15 +123,34 @@ export struct SearchResultPage {
     })
   }
 
+  @Builder
+  backButtonContent(): void {
+    Row() {
+      SymbolGlyph($r('sys.symbol.chevron_left'))
+        .fontSize(20)
+        .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+    }
+    .width(40)
+    .height(40)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      this.onClose()
+    })
+  }
+
   build() {
     Column() {
       Row({ space: 8 }) {
-        SymbolGlyph($r('sys.symbol.chevron_left'))
-          .fontSize(24)
-          .fontColor([$r('sys.color.ohos_id_color_text_primary')])
-          .onClick(() => {
-            this.onClose()
-          })
+        AreaWithHdsTabBar({
+          barHeight: 40,
+          barWidth: 40,
+          barPlacement: BarPosition.End,
+          bottomMargin: 8,
+          content: (): void => {
+            this.backButtonContent()
+          }
+        })
 
         SearchInputArea({
           barWidth: this.screenWidth * 0.78,
