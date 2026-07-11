@@ -20,6 +20,16 @@ export default class EntryAbility extends UIAbility {
 
   onWindowStageCreate(windowStage: window.WindowStage) {
     Logger.info('EntryAbility: onWindowStageCreate')
+
+    // 沉浸式全屏：状态栏和导航栏透明，内容延伸到系统栏区域
+    windowStage.getMainWindow().then((mainWindow: window.Window) => {
+      mainWindow.setWindowLayoutFullScreen(true)
+      mainWindow.setWindowSystemBarProperties({
+        statusBarColor: '#00000000',
+        navigationBarColor: '#00000000'
+      })
+    })
+
     windowStage.loadContent('pages/Index', (err) => {
       try {
         getAppRuntime().uiContext = windowStage.getMainWindowSync().getUIContext()
