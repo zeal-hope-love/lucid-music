@@ -60,13 +60,13 @@ export struct SearchPage {
   backButtonContent(): void {
     Row() {
       SymbolGlyph($r('sys.symbol.chevron_left'))
-        .fontSize(20)
+        .fontSize(28)
         .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+        .margin({ top: -5 })
     }
     .width(40)
     .height(40)
     .justifyContent(FlexAlign.Center)
-    .alignItems(VerticalAlign.Center)
     .onClick(() => {
       this.onBack()
     })
@@ -302,7 +302,7 @@ export struct SearchPage {
       }
       .width('100%')
       .height(56)
-      .margin({ top: 44 })
+      .margin({ top: 56 })
       .alignItems(VerticalAlign.Center)
       .padding({ left: 8, right: 12 })
 

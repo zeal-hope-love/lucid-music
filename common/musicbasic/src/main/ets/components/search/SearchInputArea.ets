@@ -57,7 +57,7 @@ export struct SearchInputArea {
           .focusable(this.autoFocus)
           .hitTestBehavior(this.autoFocus ? HitTestMode.Default : HitTestMode.None)
           .borderRadius(0)
-          .padding({ left: 8 })
+          .padding({ left: 4 })
           .visibility(this.autoFocus ? Visibility.Visible : Visibility.Hidden)
           .onChange((value: string) => {
             this.inputText = value
@@ -75,7 +75,7 @@ export struct SearchInputArea {
             .fontColor(this.inputText ? $r('sys.color.font_primary') : $r('sys.color.ohos_id_color_text_tertiary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .padding({ left: 6 })
+            .padding({ left: 4 })
             .hitTestBehavior(HitTestMode.None)
         } else {
           // 首页：只显示 placeholder
@@ -84,7 +84,7 @@ export struct SearchInputArea {
             .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .padding({ left: 8 })
+            .padding({ left: 4 })
             .hitTestBehavior(HitTestMode.None)
         }
       }
