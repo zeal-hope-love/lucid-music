@@ -165,6 +165,7 @@ export struct SearchResultPage {
       }
       .width('100%')
       .height(56)
+      .margin({ top: 44 })
       .alignItems(VerticalAlign.Center)
       .padding({ left: 8, right: 12 })
 
