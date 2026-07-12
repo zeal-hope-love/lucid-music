@@ -16,34 +16,29 @@ export struct AreaWithHdsTabBar {
   @Param contentPadding: number = 8
 
   build() {
-    Row() {
-      HdsTabs() {
-        TabContent() {
-        }
-        .tabBar(this.content)
+    HdsTabs() {
+      TabContent() {
       }
-      .clip(false)           // ★ 关键：消除拖动/变形时的裁剪
-      .barWidth(this.barWidth)
-      .barHeight(this.barHeight)
-      .barOverlap(true)
-      .barPosition(this.barPlacement)
-      .vertical(false)
-      .barFloatingStyle({
-        barBottomMargin: this.bottomMargin,
-        gradientMask: { maskColor: '#00000000', maskHeight: 20 },
-        systemMaterialEffect: {
-          materialType: hdsMaterial.MaterialType.IMMERSIVE,
-          materialLevel: hdsMaterial.MaterialLevel.EXQUISITE
-        }
-      })
-      .onTabBarClick(() => {
-        // 点击穿透，由内层 content 处理
-      })
+      .tabBar(this.content)
     }
-    .size({
-      width: this.barWidth + this.contentPadding * 4,
-      height: this.barHeight + this.contentPadding * 4
+    .clip(false)
+    .width(this.barWidth)
+    .height(this.barHeight)
+    .barOverlap(true)
+    .barPosition(this.barPlacement)
+    .vertical(false)
+    .barHeight(this.barHeight)
+    .barWidth(this.barWidth)
+    .barFloatingStyle({
+      barBottomMargin: this.bottomMargin,
+      gradientMask: { maskColor: '#00000000', maskHeight: 20 },
+      systemMaterialEffect: {
+        materialType: hdsMaterial.MaterialType.IMMERSIVE,
+        materialLevel: hdsMaterial.MaterialLevel.EXQUISITE
+      }
     })
-    .padding(this.contentPadding)
+    .onTabBarClick(() => {
+      // 点击穿透，由内层 content 处理
+    })
   }
 }

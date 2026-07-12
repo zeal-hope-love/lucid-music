@@ -15,7 +15,6 @@ import { HomePage } from 'home'
 import { MusicHallPage } from 'musichall'
 import { MinePage } from 'mine'
 import { SearchPage } from 'search'
-import { SearchResultPage } from 'search'
 
 @ComponentV2
 struct IndexFooter {
@@ -39,7 +38,7 @@ struct IndexFooter {
   build() {
     Column() {
       MiniPlayerBar({
-        barWidth: this.screenWidth,
+        barWidth: this.screenWidth - 40,
         bottomOffset: 10,
         onTap: (): void => {
           this.onMiniPlayerTap?.()
@@ -51,18 +50,20 @@ struct IndexFooter {
           this.onNext?.()
         }
       })
-      .margin({ bottom: 0 })
+      .margin({ bottom: 30 })
 
       LucidTabBar({
         currentIndex: this.currentTab,
-        barWidth: this.screenWidth,
-        bottomOffset: 10,
+        barWidth: this.screenWidth - 40,
+        bottomOffset: 30,
         onChange: (index: number): void => {
           this.onTabChange(index)
         }
       })
       .visibility(this.isVisible ? Visibility.Visible : Visibility.Hidden)
     }
+    .width('100%')
+    .alignItems(HorizontalAlign.Center)
   }
 }
 
@@ -71,8 +72,6 @@ struct IndexFooter {
 struct Index {
   @Local currentTab: number = 0
   @Local isSearchOverlayShowing: boolean = false
-  @Local searchOverlayState: 'search' | 'result' = 'search'
-  @Local searchKeyword: string = ''
   @Local appState: MusicAppState =
     AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!
   @Local intentState: PlaybackIntentState =
@@ -83,6 +82,13 @@ struct Index {
   aboutToAppear() {
     this.appState.playQueueIds = MusicDbApi.getInstance().getSongList().map((dto): number => dto.id)
     JsVmBridge.getInstance().init()
+  }
+
+  onBackPress(): boolean | void {
+    if (this.isSearchOverlayShowing) {
+      this.onSearchClose()
+      return true
+    }
   }
 
   @Monitor('intentState.requestVersion')
@@ -105,7 +111,6 @@ struct Index {
       curve: curves.interpolatingSpring(0, 1, 342, 38)
     }, () => {
       this.isSearchOverlayShowing = true
-      this.searchOverlayState = 'search'
     })
   }
 
@@ -115,15 +120,6 @@ struct Index {
     }, () => {
       this.isSearchOverlayShowing = false
     })
-  }
-
-  private onSearchResult(keyword: string): void {
-    this.searchKeyword = keyword
-    this.searchOverlayState = 'result'
-  }
-
-  private onSearchResultBack(): void {
-    this.searchOverlayState = 'search'
   }
 
   private onMiniPlayerTap(): void {
@@ -183,34 +179,15 @@ struct Index {
       })
       .width(StyleConstants.FULL_WIDTH)
 
-      // === 搜索覆盖层：一镜到底 SearchPage ===
-      if (this.isSearchOverlayShowing && this.searchOverlayState === 'search') {
+      // === 搜索覆盖层（含搜索+结果，内部切换） ===
+      if (this.isSearchOverlayShowing) {
         SearchPage({
           onClose: (): void => {
             this.onSearchClose()
-          },
-          onResult: (keyword: string): void => {
-            this.onSearchResult(keyword)
           }
         })
         .transition(TransitionEffect.OPACITY
           .animation({ duration: 350, curve: curves.cubicBezierCurve(0.33, 0, 0.67, 1) }))
-      }
-
-      // === 搜索结果覆盖层 ===
-      if (this.isSearchOverlayShowing && this.searchOverlayState === 'result') {
-        SearchResultPage({
-          keyword: this.searchKeyword,
-          onClose: (): void => {
-            this.onSearchResultBack()
-          }
-        })
-        .transition(TransitionEffect.asymmetric(
-          TransitionEffect.move(TransitionEdge.END)
-            .animation({ duration: 300, curve: curves.cubicBezierCurve(0.33, 0, 0.67, 1) }),
-          TransitionEffect.move(TransitionEdge.END)
-            .animation({ duration: 300, curve: curves.cubicBezierCurve(0.33, 0, 0.67, 1) })
-        ))
       }
     }
     .width(StyleConstants.FULL_WIDTH)

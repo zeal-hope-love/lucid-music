@@ -1,23 +1,29 @@
 /*
- * Lucid Music - 搜索页（覆盖层）
- * 三态切换：初始态（热门+历史）→ 输入态（联想建议）→ 结果态（跳转结果页）
+ * Lucid Music - 搜索页（覆盖层）+ 搜索结果（内嵌）
+ * 顶部固定：返回键 + 搜索框
+ * 下部切换：热门/联想 → 搜索结果
  */
 import { display } from '@kit.ArkUI'
+import { AppStorageV2 } from '@kit.ArkUI'
 import {
   AppStorageKeys, MusicAppState, PlaybackIntentState, PlaybackShellConstants
 } from 'musicbasic'
-import { AppStorageV2 } from '@kit.ArkUI'
 import { AreaWithHdsTabBar, SearchInputArea } from 'musicbasic'
 import { SearchViewModel, SearchState } from '../viewmodel/SearchViewModel'
+import { SearchResultViewModel } from '../viewmodel/SearchResultViewModel'
+import { SearchResultItem } from '../model/SearchResultItem'
 import { SuggestionItem, SuggestionType } from '../model/SuggestionItem'
 import { dispatchShellPlaybackIntent } from 'player'
 
 @ComponentV2
 export struct SearchPage {
   @Event onClose: () => void = () => {}
-  @Event onResult?: (keyword: string) => void
 
   @Local viewModel: SearchViewModel = new SearchViewModel()
+  @Local resultVM: SearchResultViewModel = new SearchResultViewModel()
+  @Local isResultMode: boolean = false
+  @Local menuItemId: number = -1
+  @Local menuVisible: boolean = false
   @Local appState: MusicAppState =
     AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!
   @Local intentState: PlaybackIntentState =
@@ -39,6 +45,44 @@ export struct SearchPage {
       this.appState.isShowPlay = true
     })
   }
+
+  // ==================== 返回键逻辑 ====================
+
+  private onBack(): void {
+    if (this.isResultMode) {
+      this.isResultMode = false
+    } else {
+      this.onClose()
+    }
+  }
+
+  @Builder
+  backButtonContent(): void {
+    Row() {
+      SymbolGlyph($r('sys.symbol.chevron_left'))
+        .fontSize(20)
+        .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+    }
+    .width(40)
+    .height(40)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      this.onBack()
+    })
+  }
+
+  // ==================== 搜索确认 ====================
+
+  private doSearch(): void {
+    const kw = this.viewModel.doSearch()
+    if (kw) {
+      this.isResultMode = true
+      this.resultVM.doSearch(kw)
+    }
+  }
+
+  // ==================== 热门+历史 ====================
 
   @Builder
   hotSearchContent(): void {
@@ -64,10 +108,7 @@ export struct SearchPage {
                 .margin({ right: 10, bottom: 10 })
                 .onClick(() => {
                   this.viewModel.updateKeyword(hotWord)
-                  const kw = this.viewModel.doSearch(hotWord)
-                  if (kw) {
-                    this.onResult?.(kw)
-                  }
+                  this.doSearch()
                 })
             })
           }
@@ -86,9 +127,7 @@ export struct SearchPage {
             SymbolGlyph($r('sys.symbol.trash_fill'))
               .fontSize(18)
               .fontColor([$r('sys.color.ohos_id_color_text_tertiary')])
-              .onClick(() => {
-                this.viewModel.clearHistory()
-              })
+              .onClick(() => { this.viewModel.clearHistory() })
           }
           .width('100%')
 
@@ -103,10 +142,7 @@ export struct SearchPage {
                 .margin({ right: 10, bottom: 10 })
                 .onClick(() => {
                   this.viewModel.updateKeyword(historyWord)
-                  const kw = this.viewModel.doSearch(historyWord)
-                  if (kw) {
-                    this.onResult?.(kw)
-                  }
+                  this.doSearch()
                 })
             })
           }
@@ -117,14 +153,17 @@ export struct SearchPage {
     .width('90%')
   }
 
+  // ==================== 联想建议 ====================
+
   @Builder
   suggestionContent(): void {
     Column() {
       ForEach(this.viewModel.suggestions, (item: SuggestionItem) => {
         Column() {
           Row({ space: 12 }) {
-            // 类型图标
-            SymbolGlyph(this.getSuggestionIcon(item.type))
+            SymbolGlyph(item.type === SuggestionType.ARTIST
+              ? $r('sys.symbol.person_crop_circle_fill_1')
+              : $r('sys.symbol.music_note_list'))
               .fontSize(18)
               .fontColor([$r('sys.color.ohos_id_color_text_tertiary')])
 
@@ -137,16 +176,11 @@ export struct SearchPage {
           .height(48)
           .padding({ left: 12, right: 12 })
           .onClick(() => {
-            const kw = this.viewModel.doSearch(item.text)
-            if (kw) {
-              this.onResult?.(kw)
-            }
+            this.viewModel.updateKeyword(item.text)
+            this.doSearch()
           })
 
-          Divider()
-            .strokeWidth(0.5)
-            .color('#1A000000')
-            .width('100%')
+          Divider().strokeWidth(0.5).color('#1A000000').width('100%')
         }
       })
     }
@@ -154,65 +188,116 @@ export struct SearchPage {
     .margin({ top: 8 })
   }
 
-  /** 获取建议类型对应的图标资源 */
-  private getSuggestionIcon(type: SuggestionType): Resource {
-    if (type === SuggestionType.ARTIST) {
-      return $r('sys.symbol.person_crop_circle_fill_1')
-    } else {
-      return $r('sys.symbol.music_note_list')
+  // ==================== 搜索结果列表 ====================
+
+  @Builder
+  itemMenuBuilder(item: SearchResultItem): void {
+    Menu() {
+      MenuItem({ content: '下一首播放' })
+        .onClick(() => {
+          this.resultVM.playNext(item)
+          this.menuVisible = false
+        })
+      MenuItem({ content: '稍后播放' })
+        .onClick(() => {
+          this.resultVM.playLater(item)
+          this.menuVisible = false
+        })
+      MenuItem({ content: '添加到歌单' })
+        .onClick(() => { this.menuVisible = false })
     }
   }
 
   @Builder
-  backButtonContent(): void {
-    Row() {
-      SymbolGlyph($r('sys.symbol.chevron_left'))
-        .fontSize(20)
-        .fontColor([$r('sys.color.ohos_id_color_text_primary')])
-        .offset({ y: -2 })        // ← 负数往上，正数往下
+  resultList(): void {
+    List() {
+      ForEach(this.resultVM.results, (item: SearchResultItem) => {
+        ListItem() {
+          Row() {
+            Column({ space: 4 }) {
+              Text(item.title as string)
+                .fontSize(15)
+                .fontWeight(FontWeight.Medium)
+                .fontColor($r('sys.color.ohos_id_color_text_primary'))
+                .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+              Text(item.singer as string)
+                .fontSize(13)
+                .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+                .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+            }
+            .alignItems(HorizontalAlign.Start).layoutWeight(1)
+
+            Text('⋯')
+              .fontSize(20)
+              .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+              .fontWeight(FontWeight.Bold)
+              .padding({ left: 12, right: 4, top: 12, bottom: 12 })
+              .onClick(() => {
+                this.menuItemId = item.id
+                this.menuVisible = !this.menuVisible
+              })
+              .bindMenu(
+                this.menuVisible && this.menuItemId === item.id,
+                this.itemMenuBuilder(item)
+              )
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+          .onClick(() => { this.resultVM.playSong(item) })
+        }
+      })
     }
-    .width(40)
-    .height(40)
-    .justifyContent(FlexAlign.Center)
-    .alignItems(VerticalAlign.Center)
-    .onClick(() => {
-      this.onClose()
-    })
+    .width('100%')
+    .layoutWeight(1)
+    .scrollBar(BarState.Off)
+    .listDirection(Axis.Vertical)
+    .divider({ strokeWidth: 0.5, color: '#1A000000', startMargin: 16, endMargin: 16 })
   }
+
+  // ==================== 搜索框点击（结果模式下返回搜索） ====================
+
+  private onSearchInputTap(): void {
+    if (this.isResultMode) {
+      this.isResultMode = false
+      setTimeout(() => {
+        this.getUIContext().getFocusController().requestFocus('search_text_input')
+      }, 200)
+    }
+  }
+
+  // ==================== UI ====================
 
   build() {
     Column() {
+      // 顶部固定栏：返回键 + 搜索框
       Row({ space: 8 }) {
         AreaWithHdsTabBar({
           barHeight: 40,
           barWidth: 40,
           barPlacement: BarPosition.End,
           bottomMargin: 8,
-          content: (): void => {
-            this.backButtonContent()
-          }
+          content: (): void => { this.backButtonContent() }
         })
-          .margin({ top: 0 })   // ← 正数往下，负数往上
+
         SearchInputArea({
           barWidth: this.screenWidth * 0.78,
           isFollow: false,
-          autoFocus: true,
+          autoFocus: !this.isResultMode,
           keyword: this.viewModel.keyword,
-          placeholder: '搜歌曲、歌手、专辑',
+          placeholder: this.isResultMode ? this.resultVM.keyword : '搜歌曲、歌手、专辑',
           onKeywordChange: (text: string): void => {
             this.viewModel.updateKeyword(text)
           },
           onSearch: (): void => {
-            const kw = this.viewModel.doSearch()
-            if (kw) {
-              this.onResult?.(kw)
-            }
+            this.doSearch()
           },
           onClear: (): void => {
             this.viewModel.clear()
+          },
+          onTap: (): void => {
+            this.onSearchInputTap()
           }
         })
-          .margin({ top: 0 })  // ← 负数往上
         .layoutWeight(1)
       }
       .width('100%')
@@ -220,22 +305,38 @@ export struct SearchPage {
       .alignItems(VerticalAlign.Center)
       .padding({ left: 8, right: 12 })
 
-      if (this.viewModel.currentState === SearchState.HOT) {
-        Scroll() {
-          this.hotSearchContent()
+      // 下部内容区
+      if (this.isResultMode) {
+        // 搜索结果
+        if (this.resultVM.isLoading) {
+          LoadingProgress().width(40).height(40).margin({ top: 100 })
         }
-        .width('100%')
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-        .margin({ top: 16 })
-      } else if (this.viewModel.currentState === SearchState.SUGGESTING) {
-        Scroll() {
-          this.suggestionContent()
+        if (!this.resultVM.isLoading) {
+          if (this.resultVM.results.length > 0) {
+            this.resultList()
+          } else {
+            Column() {
+              Text('暂无搜索结果')
+                .fontSize(15)
+                .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+                .margin({ top: 100 })
+            }
+            .width('100%').layoutWeight(1)
+          }
         }
-        .width('100%')
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-        .margin({ top: 4 })
+      } else {
+        // 搜索内容（热门/联想）
+        if (this.viewModel.currentState === SearchState.HOT) {
+          Scroll() {
+            this.hotSearchContent()
+          }
+          .width('100%').layoutWeight(1).scrollBar(BarState.Off).margin({ top: 16 })
+        } else if (this.viewModel.currentState === SearchState.SUGGESTING) {
+          Scroll() {
+            this.suggestionContent()
+          }
+          .width('100%').layoutWeight(1).scrollBar(BarState.Off).margin({ top: 4 })
+        }
       }
     }
     .width('100%')

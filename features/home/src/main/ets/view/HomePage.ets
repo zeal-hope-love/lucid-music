@@ -49,9 +49,8 @@ export struct HomePage {
           .fontColor($r('sys.color.ohos_id_color_text_primary'))
       }
       .width('90%')
-      .margin({ top: 16 })
+      .margin({ top: 64 })
 
-      // 光感搜索框（覆盖层显示时隐藏，触发一镜到底转场）
       if (!this.isSearchOverlayShowing) {
         SearchInputArea({
           barWidth: this.screenWidth * 0.9,
@@ -62,7 +61,7 @@ export struct HomePage {
           }
         })
         .width('90%')
-        .margin({ top: 10 })
+        .margin({ top: 25 })
       }
 
       Blank()

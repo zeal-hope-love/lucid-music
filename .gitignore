@@ -11,3 +11,4 @@ oh_modules
 /.clang-tidy
 **/.test
 /.appanalyzer
+.codegenie

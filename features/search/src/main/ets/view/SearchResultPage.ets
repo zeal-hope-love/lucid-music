@@ -156,7 +156,10 @@ export struct SearchResultPage {
           barWidth: this.screenWidth * 0.78,
           isFollow: false,
           keyword: this.keyword,
-          placeholder: this.keyword
+          placeholder: this.keyword,
+          onTap: (): void => {
+            this.onClose()
+          }
         })
         .layoutWeight(1)
       }

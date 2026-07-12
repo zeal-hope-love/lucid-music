@@ -19,7 +19,7 @@ export struct LucidTabBar {
 
   @Local tabConfigs: TabConfig[] = [
     { index: 0, label: '首页', icon: $r('sys.symbol.house_fill') },
-    { index: 1, label: '音乐厅', icon: $r('sys.symbol.music_note_list') },
+    { index: 1, label: '音乐厅', icon: $r('sys.symbol.auditorium') },
     { index: 2, label: '我的', icon: $r('sys.symbol.person_crop_circle_fill_1') }
   ]
 
@@ -46,21 +46,21 @@ export struct LucidTabBar {
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
         .layoutWeight(1)
-        .height(64)
+        .height(56)
         .onClick(() => {
           this.onChange(cfg.index)
         })
       })
     }
     .width(this.barWidth)
-    .height(64)
+    .padding({ top: 4, bottom: 4 })
     .justifyContent(FlexAlign.SpaceAround)
     .alignItems(VerticalAlign.Center)
   }
 
   build() {
     AreaWithHdsTabBar({
-      barHeight: 64,
+      barHeight: 56,
       barWidth: this.barWidth,
       barPlacement: BarPosition.End,
       bottomMargin: this.bottomOffset,

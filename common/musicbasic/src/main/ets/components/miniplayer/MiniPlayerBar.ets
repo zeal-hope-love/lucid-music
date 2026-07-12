@@ -1,11 +1,14 @@
 /*
  * Lucid Music - 迷你播放条
- * 显示当前播放歌曲信息 + 播放控制，点击跳转播放页
+ * 显示当前播放歌曲信息 + 播放控制 + 播放列表按钮
  * 订阅 MusicAppState，无播放时完全隐藏
  */
 import { AppStorageV2 } from '@kit.ArkUI'
 import { AppStorageKeys } from '../../constants/Constants'
 import { MusicAppState } from '../../model/MusicAppState'
+import { SongItem } from '../../model/SongData'
+import { PlaybackIntentState } from '../../model/PlaybackIntentState'
+import { MusicDbApi } from '../../util/MusicDbApi'
 import { AreaWithHdsTabBar } from '../floating/AreaWithHdsTabBar'
 
 @ComponentV2
@@ -18,6 +21,9 @@ export struct MiniPlayerBar {
 
   @Local appState: MusicAppState =
     AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!
+  @Local intentState: PlaybackIntentState =
+    AppStorageV2.connect(PlaybackIntentState, AppStorageKeys.PLAYBACK_INTENT_STATE, () => new PlaybackIntentState())!
+  @Local isShowPlayList: boolean = false
 
   @Computed
   get hasSong(): boolean {
@@ -34,11 +40,103 @@ export struct MiniPlayerBar {
     return this.appState.getCurrentSongItem()?.singer?.toString() ?? '未在播放'
   }
 
+  // 解析播放列表为 SongItem 数组
+  private resolvePlaylist(): SongItem[] {
+    const result: SongItem[] = []
+    for (let i = 0; i < this.appState.playQueueIds.length; i++) {
+      const song = this.appState.resolveSongAtQueueIndex(i)
+      if (song) {
+        result.push(song)
+      }
+    }
+    return result
+  }
+
+  // ==================== 播放列表 Sheet Builder ====================
+
+  @Builder
+  playlistSheetBuilder(): void {
+    Column() {
+      // 标题栏
+      Row() {
+        Text('播放列表')
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+        Blank()
+        Text(`${this.appState.getQueueLength()} 首`)
+          .fontSize(13)
+          .fontColor($r('sys.color.font_secondary'))
+      }
+      .width('100%')
+      .padding({ left: 20, right: 20, top: 16, bottom: 8 })
+
+      Divider().strokeWidth(0.5).color('#1A000000')
+
+      // 歌曲列表
+      if (this.appState.getQueueLength() > 0) {
+        List() {
+          ForEach(this.resolvePlaylist(), (item: SongItem, index: number) => {
+            ListItem() {
+              Row() {
+                Column({ space: 4 }) {
+                  Text(item.title as string)
+                    .fontSize(15)
+                    .fontWeight(this.appState.selectIndex === index ? FontWeight.Bold : FontWeight.Medium)
+                    .fontColor(this.appState.selectIndex === index
+                      ? $r('sys.color.ohos_id_color_text_primary')
+                      : $r('sys.color.ohos_id_color_text_primary'))
+                    .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+                  Text(item.singer as string)
+                    .fontSize(13)
+                    .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+                    .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+                }
+                .alignItems(HorizontalAlign.Start).layoutWeight(1)
+
+                if (this.appState.selectIndex === index && this.appState.isPlay) {
+                  SymbolGlyph($r('sys.symbol.play_fill'))
+                    .fontSize(18)
+                    .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+                }
+              }
+              .width('100%')
+              .padding({ left: 20, right: 20, top: 14, bottom: 14 })
+              .onClick(() => {
+                this.intentState.pendingPlaySongId = item.id
+                this.intentState.requestVersion++
+                this.isShowPlayList = false
+              })
+            }
+          })
+        }
+        .width('100%').layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .listDirection(Axis.Vertical)
+        .divider({ strokeWidth: 0.5, color: '#1A000000', startMargin: 20, endMargin: 20 })
+      } else {
+        Column() {
+          Text('播放列表为空')
+            .fontSize(14)
+            .fontColor($r('sys.color.font_secondary'))
+            .margin({ top: 40 })
+        }
+        .width('100%').layoutWeight(1)
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
+    .borderRadius({ topLeft: 20, topRight: 20 })
+  }
+
+  // ==================== Mini Bar 内容 ====================
+
   @Builder
   miniBarContent(): void {
     Row() {
       Column() {
-        Image($r('app.media.startIcon'))
+        Image($r('app.media.ic_music_symbol'))
           .width('100%').height('100%')
           .borderRadius('50%')
       }
@@ -63,23 +161,39 @@ export struct MiniPlayerBar {
         this.onTap?.()
       })
 
-      Row({ space: 16 }) {
-        SymbolGlyph(this.appState.isPlay ?
-          $r('sys.symbol.pause_circle_fill') : $r('sys.symbol.play_circle_fill'))
-          .fontSize($r('sys.float.Title_M'))
-          .onClick(() => {
-            this.onPlayPause?.()
-          })
-        SymbolGlyph($r('sys.symbol.forward_end_fill'))
-          .fontSize($r('sys.float.Title_M'))
-          .onClick(() => {
-            this.onNext?.()
-          })
-      }
-      .padding({ left: 12, right: 12 })
+      // 播放控制按钮
+      SymbolGlyph(this.appState.isPlay ?
+        $r('sys.symbol.pause_round_triangle_fill') : $r('sys.symbol.play_round_triangle_fill'))
+        .fontSize($r('sys.float.Title_M'))
+        .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+        .margin({ left: 6, right: 6 })
+        .onClick(() => {
+          this.onPlayPause?.()
+        })
+      SymbolGlyph($r('sys.symbol.forward_end_fill'))
+        .fontSize($r('sys.float.Title_M'))
+        .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+        .margin({ left: 6, right: 6 })
+        .onClick(() => {
+          this.onNext?.()
+        })
+      SymbolGlyph($r('sys.symbol.music_note_list'))
+        .fontSize($r('sys.float.Title_M'))
+        .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+        .margin({ left: 6, right: 12 })
+        .onClick(() => {
+          this.isShowPlayList = true
+        })
+        .bindSheet($$this.isShowPlayList, this.playlistSheetBuilder(), {
+          detents: [SheetSize.MEDIUM],
+          dragBar: false,
+          showClose: false,
+          preferType: SheetType.CENTER
+        })
     }
     .width(this.barWidth - 20)
-    .height(56)
+    .padding({ top: 4, bottom: 4 })
+    .alignItems(VerticalAlign.Center)
   }
 
   build() {
