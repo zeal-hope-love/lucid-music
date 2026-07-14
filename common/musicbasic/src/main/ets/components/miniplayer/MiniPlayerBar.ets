@@ -26,6 +26,18 @@ export struct MiniPlayerBar {
   @Local isShowPlayList: boolean = false
 
   @Computed
+  get coverSource(): Resource | string {
+    const song = this.appState.getCurrentSongItem()
+    if (song?.coverUrl) {
+      return song.coverUrl
+    }
+    if (song?.label) {
+      return song.label
+    }
+    return $r('app.media.ic_music_symbol')
+  }
+
+  @Computed
   get hasSong(): boolean {
     return this.appState.getQueueLength() > 0 || this.appState.remoteSongItem !== null
   }
@@ -136,9 +148,11 @@ export struct MiniPlayerBar {
   miniBarContent(): void {
     Row() {
       Column() {
-        Image($r('app.media.ic_music_symbol'))
+        Image(this.coverSource)
           .width('100%').height('100%')
           .borderRadius('50%')
+          .objectFit(ImageFit.Cover)
+          .geometryTransition('coverImage', { follow: true })
       }
       .padding(1).width(40).aspectRatio(1)
       .justifyContent(FlexAlign.Center)
@@ -157,15 +171,13 @@ export struct MiniPlayerBar {
       }
       .padding({ left: 12 })
       .alignItems(HorizontalAlign.Start).layoutWeight(1)
-      .onClick(() => {
-        this.onTap?.()
-      })
 
-      // 播放控制按钮
+      // 播放控制按钮 — hitTestBehavior 防止触发外层 Row 的 onClick
       SymbolGlyph(this.appState.isPlay ?
         $r('sys.symbol.pause_round_triangle_fill') : $r('sys.symbol.play_round_triangle_fill'))
         .fontSize($r('sys.float.Title_M'))
         .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+        .hitTestBehavior(HitTestMode.Block)
         .margin({ left: 6, right: 6 })
         .onClick(() => {
           this.onPlayPause?.()
@@ -173,6 +185,7 @@ export struct MiniPlayerBar {
       SymbolGlyph($r('sys.symbol.forward_end_fill'))
         .fontSize($r('sys.float.Title_M'))
         .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+        .hitTestBehavior(HitTestMode.Block)
         .margin({ left: 6, right: 6 })
         .onClick(() => {
           this.onNext?.()
@@ -180,6 +193,7 @@ export struct MiniPlayerBar {
       SymbolGlyph($r('sys.symbol.music_note_list'))
         .fontSize($r('sys.float.Title_M'))
         .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+        .hitTestBehavior(HitTestMode.Block)
         .margin({ left: 6, right: 12 })
         .onClick(() => {
           this.isShowPlayList = true
@@ -194,6 +208,9 @@ export struct MiniPlayerBar {
     .width(this.barWidth - 20)
     .padding({ top: 4, bottom: 4 })
     .alignItems(VerticalAlign.Center)
+    .onClick(() => {
+      this.onTap?.()
+    })
   }
 
   build() {

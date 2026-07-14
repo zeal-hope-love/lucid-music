@@ -70,6 +70,16 @@ export class GridConstants {
  * NavPath / navigation stack page names; must match registered route names.
  */
 export class RouterUrlConstants {
+  /** Home tab */
+  public static readonly HOME: string = 'Home';
+  /** MusicHall tab */
+  public static readonly MUSIC_HALL: string = 'MusicHall';
+  /** Mine tab */
+  public static readonly MINE: string = 'Mine';
+  /** Search page */
+  public static readonly SEARCH: string = 'Search';
+  /** Playback page (future) */
+  public static readonly PLAYBACK: string = 'Playback';
   /** Playlist detail page. */
   public static readonly PLAYLIST_DETAIL: string = 'PlaylistDetailPage';
   /** Split-column playlist (wide) page. */
@@ -147,4 +157,8 @@ export class AppStorageKeys {
   public static readonly APP_RUNTIME: string = 'musichome_AppRuntimeStorage';
   /** Active audio source ID (user-imported script that is currently enabled). */
   public static readonly ACTIVE_SOURCE_ID: string = 'musichome_ActiveSourceId';
+  /** Current selected tab index (0=Home, 1=MusicHall, 2=Mine). Shared across pages via AppStorage. */
+  public static readonly CURRENT_TAB: string = 'musichome_CurrentTab';
+  /** {@link CurrentTabState} – V2 observable tab index. */
+  public static readonly CURRENT_TAB_STATE: string = 'musichome_CurrentTabState';
 }

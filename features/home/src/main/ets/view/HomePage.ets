@@ -1,24 +1,17 @@
 /*
  * Lucid Music - 首页
- * 布局：左上标题 + 光感搜索框（一镜到底锚点）
+ * 布局：标题 + 搜索框 + 内容区 + 底部 MiniPlayerBar + LucidTabBar
  */
-import { AppStorageV2, display } from '@kit.ArkUI'
+import { AppStorageV2, curves, display } from '@kit.ArkUI'
 import {
-  AppStorageKeys, MusicAppState, PlaybackIntentState, PlaybackShellConstants
+  AppStorageKeys, CurrentTabState, RouterUrlConstants
 } from 'musicbasic'
-import { SearchInputArea } from 'musicbasic'
-import { dispatchShellPlaybackIntent } from 'player'
+import { LucidTabBar, MiniPlayerBar, SearchInputArea } from 'musicbasic'
 
 @ComponentV2
 export struct HomePage {
-  @Param @Require currentTab: number
-  @Param @Require isSearchOverlayShowing: boolean
-  @Event onSearchClick: () => void = () => {}
-
-  @Local appState: MusicAppState =
-    AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!
-  @Local intentState: PlaybackIntentState =
-    AppStorageV2.connect(PlaybackIntentState, AppStorageKeys.PLAYBACK_INTENT_STATE, () => new PlaybackIntentState())!
+  @Consumer() navPathStack: NavPathStack = new NavPathStack()
+  @Local currentTab: number = AppStorage.get<number>(AppStorageKeys.CURRENT_TAB) ?? 0
 
   @Computed
   get screenWidth(): number {
@@ -30,41 +23,63 @@ export struct HomePage {
     }
   }
 
-  @Monitor('intentState.requestVersion')
-  onPlaybackIntentChanged(): void {
-    dispatchShellPlaybackIntent(this.appState, this.intentState, () => {
-      this.getUIContext().animateTo({
-        duration: PlaybackShellConstants.OPEN_PLAYER_UI_ANIMATION_MS,
-        curve: Curve.EaseInOut
-      }, () => { this.appState.isShowPlay = true })
-    })
-  }
-
   build() {
-    Column({ space: 0 }) {
-      Row() {
-        Text('首页')
-          .fontSize(28)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.ohos_id_color_text_primary'))
-      }
-      .width('90%')
-      .margin({ top: 64 })
+    Stack({ alignContent: Alignment.Bottom }) {
+      Column() {
+        Row() {
+          Text('首页')
+            .fontSize(28)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.ohos_id_color_text_primary'))
+        }
+        .width('90%')
+        .margin({ top: 64 })
 
-      if (!this.isSearchOverlayShowing) {
         SearchInputArea({
-          barWidth: this.screenWidth * 0.9,
-          isFollow: true,
+          barWidth: Math.floor(this.screenWidth * 0.75),
           placeholder: '搜歌曲、歌手、专辑',
           onTap: (): void => {
-            this.onSearchClick()
+            this.getUIContext().animateTo({
+              curve: curves.interpolatingSpring(0, 1, 342, 38)
+            }, () => {
+              this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.SEARCH, undefined), false)
+            })
           }
         })
-        .width('90%')
+        .width(Math.floor(this.screenWidth * 0.75))
         .margin({ top: 25 })
-      }
+        .alignSelf(ItemAlign.Center)
 
-      Blank()
+        Blank()
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
+      .padding({ bottom: 150 })
+
+      // === 底部栏 ===
+      Column() {
+        MiniPlayerBar({
+          barWidth: this.screenWidth - 40,
+          bottomOffset: 10,
+          onTap: (): void => {
+            this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYBACK, undefined))
+          }
+        })
+        .margin({ bottom: 30 })
+
+        LucidTabBar({
+          currentIndex: this.currentTab,
+          barWidth: this.screenWidth - 40,
+          bottomOffset: 30,
+          onChange: (index: number): void => {
+            const tabState = AppStorageV2.connect(CurrentTabState, AppStorageKeys.CURRENT_TAB_STATE, () => new CurrentTabState())!
+            tabState.index = index
+          }
+        })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
     .height('100%')

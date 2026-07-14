@@ -20,14 +20,6 @@ export struct SearchInputArea {
 
   @Local inputText: string = this.keyword
 
-  aboutToAppear(): void {
-    if (this.autoFocus) {
-      setTimeout(() => {
-        this.getUIContext().getFocusController().requestFocus('search_text_input')
-      }, 350)
-    }
-  }
-
   @Monitor('keyword')
   onKeywordUpdate(): void {
     this.inputText = this.keyword
@@ -118,5 +110,7 @@ export struct SearchInputArea {
       content: (): void => { this.searchContent() }
     })
     .geometryTransition('SEARCH_ONE_SHOT_TRANSITION_ID', { follow: this.isFollow })
+    .transition(TransitionEffect.opacity(0.99))
+    .width('100%')
   }
 }

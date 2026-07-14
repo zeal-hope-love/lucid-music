@@ -6,6 +6,8 @@ import { Logger, PlaybackIntentState, MusicAppState, AppStorageKeys } from 'musi
 import { AppStorageV2 } from '@kit.ArkUI'
 import { SearchResultItem } from '../model/SearchResultItem'
 
+import { DEFAULT_PLATFORM_TABS, PlatformTab, SearchPlatform } from './SearchViewModel'
+
 const TAG = 'SearchResultViewModel'
 
 @ObservedV2
@@ -13,6 +15,8 @@ export class SearchResultViewModel {
   @Trace keyword: string = ''
   @Trace results: SearchResultItem[] = []
   @Trace isLoading: boolean = false
+  @Trace currentPlatform: SearchPlatform = SearchPlatform.KUGOU
+  @Trace platforms: PlatformTab[] = DEFAULT_PLATFORM_TABS
 
   private appState: MusicAppState =
     AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!

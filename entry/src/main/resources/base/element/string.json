@@ -15,6 +15,118 @@
     {
       "name": "search_title",
       "value": "Lucid Music"
+    },
+    {
+      "name": "page_show",
+      "value": "page from package"
+    },
+    {
+      "name": "sequential_playback",
+      "value": "Sequential playback"
+    },
+    {
+      "name": "single_playback",
+      "value": "Single playback"
+    },
+    {
+      "name": "random_playback",
+      "value": "Random playback"
+    },
+    {
+      "name": "volume_setting",
+      "value": "Volume setting"
+    },
+    {
+      "name": "speed_setting",
+      "value": "Speed setting"
+    },
+    {
+      "name": "playback_speed",
+      "value": "Playback speed"
+    },
+    {
+      "name": "play_list",
+      "value": "play list(%d)"
+    },
+    {
+      "name": "song_title_one",
+      "value": "Dream It Possible"
+    },
+    {
+      "name": "singer_one",
+      "value": "Delacey"
+    },
+    {
+      "name": "song_title_two",
+      "value": "I don't know."
+    },
+    {
+      "name": "singer_two",
+      "value": "second singer"
+    },
+    {
+      "name": "song_title_three",
+      "value": "third song"
+    },
+    {
+      "name": "singer_three",
+      "value": "third singer"
+    },
+    {
+      "name": "song_title_four",
+      "value": "fourth song"
+    },
+    {
+      "name": "singer_four",
+      "value": "fourth singer"
+    },
+    {
+      "name": "song_title_five",
+      "value": "fifth song"
+    },
+    {
+      "name": "singer_five",
+      "value": "fifth singer"
+    },
+    {
+      "name": "song_title_six",
+      "value": "sixth song"
+    },
+    {
+      "name": "singer_six",
+      "value": "sixth singer"
+    },
+    {
+      "name": "song_title_seven",
+      "value": "seventh song"
+    },
+    {
+      "name": "singer_seven",
+      "value": "seventh singer"
+    },
+    {
+      "name": "song_title_eight",
+      "value": "eighth song"
+    },
+    {
+      "name": "singer_eight",
+      "value": "eighth singer"
+    },
+    {
+      "name": "song_title_nine",
+      "value": "ninth song"
+    },
+    {
+      "name": "singer_nine",
+      "value": "ninth singer"
+    },
+    {
+      "name": "song_title_ten",
+      "value": "tenth singer"
+    },
+    {
+      "name": "singer_ten",
+      "value": "tenth singer"
     }
   ]
 }

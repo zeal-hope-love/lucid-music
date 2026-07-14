@@ -11,6 +11,7 @@ import { BusinessError } from '@kit.BasicServicesKit'
 export default class EntryAbility extends UIAbility {
   onCreate() {
     getAppRuntime().context = this.context
+    AppStorage.setOrCreate('context', this.context)
     Logger.info('EntryAbility: onCreate')
   }
 

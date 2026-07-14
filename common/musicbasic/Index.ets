@@ -59,6 +59,7 @@ export { SongItem } from './src/main/ets/model/SongData';
 export { OptionItem } from './src/main/ets/model/OptionItem';
 export { MusicAppState } from './src/main/ets/model/MusicAppState';
 export { PlaybackIntentState } from './src/main/ets/model/PlaybackIntentState';
+export { CurrentTabState } from './src/main/ets/model/CurrentTabState';
 export { SongDataSource } from './src/main/ets/model/SongDataSource';
 
 // util

@@ -13,6 +13,30 @@ export enum SearchState {
   RESULT = 'result'
 }
 
+/** 音乐搜索平台 */
+export enum SearchPlatform {
+  KUGOU = 'kugou',
+  QQ = 'qq',
+  NETEASE = 'netease',
+  KUWO = 'kuwo',
+  MIGU = 'migu'
+}
+
+/** 平台 Tab 数据（名称 + 枚举值） */
+export interface PlatformTab {
+  name: string
+  platform: SearchPlatform
+}
+
+/** 默认平台 Tab 列表（排序：酷狗 → QQ → 网易云 → 酷我 → 咪咕） */
+export const DEFAULT_PLATFORM_TABS: PlatformTab[] = [
+  { name: '酷狗', platform: SearchPlatform.KUGOU },
+  { name: 'QQ', platform: SearchPlatform.QQ },
+  { name: '网易云', platform: SearchPlatform.NETEASE },
+  { name: '酷我', platform: SearchPlatform.KUWO },
+  { name: '咪咕', platform: SearchPlatform.MIGU }
+]
+
 @ObservedV2
 export class SearchViewModel {
   @Trace keyword: string = ''
@@ -20,6 +44,8 @@ export class SearchViewModel {
   @Trace suggestions: SuggestionItem[] = []
   @Trace hotSearches: string[] = ['周杰伦', '邓紫棋', '林俊杰', '陈奕迅', 'Taylor Swift', 'IU']
   @Trace searchHistory: string[] = []
+  @Trace currentPlatform: SearchPlatform = SearchPlatform.KUGOU
+  @Trace platforms: PlatformTab[] = DEFAULT_PLATFORM_TABS
 
   private maxHistoryCount: number = 10
 
