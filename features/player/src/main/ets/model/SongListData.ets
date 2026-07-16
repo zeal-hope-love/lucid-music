@@ -24,7 +24,9 @@ const songList: SongItem[] = [
     src: 'Delacey - Dream It Possible.flac',
     index: 0,
     lyric: 'lrcfiles/DreamItPossible.lrc',
-    isDarkBackground: true
+    isDarkBackground: true,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 2,
@@ -35,7 +37,9 @@ const songList: SongItem[] = [
     src: 'world.wav',
     index: 1,
     lyric: '',
-    isDarkBackground: false
+    isDarkBackground: false,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 3,
@@ -46,7 +50,9 @@ const songList: SongItem[] = [
     src: 'power.wav',
     index: 2,
     lyric: '',
-    isDarkBackground: true
+    isDarkBackground: true,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 4,
@@ -58,6 +64,8 @@ const songList: SongItem[] = [
     index: 3,
     lyric: '',
     isDarkBackground: true,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 5,
@@ -69,6 +77,8 @@ const songList: SongItem[] = [
     index: 4,
     lyric: '',
     isDarkBackground: false,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 6,
@@ -80,6 +90,8 @@ const songList: SongItem[] = [
     index: 5,
     lyric: '',
     isDarkBackground: true,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 7,
@@ -91,6 +103,8 @@ const songList: SongItem[] = [
     index: 6,
     lyric: '',
     isDarkBackground: true,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 8,
@@ -102,6 +116,8 @@ const songList: SongItem[] = [
     index: 7,
     lyric: '',
     isDarkBackground: false,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 9,
@@ -113,6 +129,8 @@ const songList: SongItem[] = [
     index: 8,
     lyric: '',
     isDarkBackground: false,
+    coverUrl: '',
+    lyricText: ''
   },
   {
     id: 10,
@@ -124,6 +142,8 @@ const songList: SongItem[] = [
     index: 9,
     lyric: '',
     isDarkBackground: false,
+    coverUrl: '',
+    lyricText: ''
   }
 ]
 

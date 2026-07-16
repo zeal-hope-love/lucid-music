@@ -36,6 +36,11 @@
       }
     ],
     "extensionAbilities": [],
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET"
+      }
+    ],
     "metadata": [
       {
         "name": "ohos.arkui.UIMaterial.state",

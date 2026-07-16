@@ -44,7 +44,8 @@ export struct MusicInfoComponent {
   }
 
   syncFavoriteState(): void {
-    if (this.songList.length > 0 && this.selectIndex < this.songList.length) {
+    if (this.songList.length > 0 && this.selectIndex >= 0 &&
+        this.selectIndex < this.songList.length && this.songList[this.selectIndex]) {
       const songId = this.songList[this.selectIndex].id
       this.isFavorite = MusicDbApi.getInstance().isFavorite(songId)
     }
@@ -81,18 +82,38 @@ export struct MusicInfoComponent {
   @Builder
   CoverInfo() {
     Row() {
-      Image(this.songList[this.selectIndex].label)
-        .width(StyleConstants.FULL_WIDTH)
-        .aspectRatio(1)
-        .borderRadius($r('app.float.cover_radius_label'))
-        .shadow({
-          radius: $r('app.float.shadow_radius'),
-          color: $r('app.color.shadow_color'),
-          offsetX: 0,
-          offsetY: 8
-        })
-        .margin($r('app.float.lyric_margin_right_sm'))
-        .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+      if (this.songList.length > 0 && this.selectIndex >= 0 &&
+          this.selectIndex < this.songList.length &&
+          this.songList[this.selectIndex] &&
+          this.songList[this.selectIndex].coverUrl) {
+        Image(this.songList[this.selectIndex].coverUrl)
+          .width(StyleConstants.FULL_WIDTH)
+          .aspectRatio(1)
+          .borderRadius($r('app.float.cover_radius_label'))
+          .shadow({
+            radius: $r('app.float.shadow_radius'),
+            color: $r('app.color.shadow_color'),
+            offsetX: 0,
+            offsetY: 8
+          })
+          .margin($r('app.float.lyric_margin_right_sm'))
+          .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+      } else if (this.songList.length > 0 && this.selectIndex >= 0 &&
+                 this.selectIndex < this.songList.length &&
+                 this.songList[this.selectIndex]) {
+        Image(this.songList[this.selectIndex].label)
+          .width(StyleConstants.FULL_WIDTH)
+          .aspectRatio(1)
+          .borderRadius($r('app.float.cover_radius_label'))
+          .shadow({
+            radius: $r('app.float.shadow_radius'),
+            color: $r('app.color.shadow_color'),
+            offsetX: 0,
+            offsetY: 8
+          })
+          .margin($r('app.float.lyric_margin_right_sm'))
+          .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+      }
     }
   }
 
@@ -100,7 +121,9 @@ export struct MusicInfoComponent {
   MusicInfo() {
     Row() {
       Column() {
-        Text(this.songList[this.selectIndex].title)
+        Text(this.songList.length > 0 && this.selectIndex >= 0 &&
+             this.selectIndex < this.songList.length ?
+             this.songList[this.selectIndex].title : '')
           .fontSize(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_MD && !this.isFoldFull ?
             $r('app.float.title_font_play_md') : $r('app.float.title_font_play'))
           .fontColor(Color.White)
@@ -109,7 +132,9 @@ export struct MusicInfoComponent {
           .fontFamily(PlayerConstants.FONT_FAMILY_BOLD)
           .constraintSize({ minWidth: 200 })
           .geometryTransition('PLAYBACK_TITLE_TRANSITION', { follow: this.follow })
-        Text(this.songList[this.selectIndex].singer)
+        Text(this.songList.length > 0 && this.selectIndex >= 0 &&
+             this.selectIndex < this.songList.length ?
+             this.songList[this.selectIndex].singer : '')
           .textAlign(TextAlign.Start)
           .fontSize(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_MD && !this.isFoldFull ?
             $r('app.float.title_font_play') : $r('app.float.font_fourteen'))
@@ -129,7 +154,14 @@ export struct MusicInfoComponent {
         .opacity(0.86)
         .geometryTransition('PLAYBACK_FAVORITE_TRANSITION', { follow: this.follow })
         .onClick(() => {
-          const songId = this.songList[this.selectIndex].id
+          if (!this.songList || this.selectIndex < 0 || this.selectIndex >= this.songList.length) {
+            return
+          }
+          const songItem = this.songList[this.selectIndex]
+          if (!songItem) {
+            return
+          }
+          const songId = songItem.id
           const nowFav = MusicDbApi.getInstance().toggleFavorite(songId)
           this.isFavorite = nowFav
           AVSessionController.getInstance().updateFavoriteState(songId.toString(), nowFav)

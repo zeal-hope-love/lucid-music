@@ -51,6 +51,10 @@ export class  MusicAppState {
   @Trace public imageColor: string = 'rgba(0, 0, 2, 1.00)';
   /** HdsTabs mini bar expanded (true) vs compact (false). */
   @Trace public miniBarExpanded: boolean = false;
+  /** 播放状态: idle | requesting_url | preparing | ready | error */
+  @Trace public playbackStatus: string = 'idle';
+  /** 播放状态可读文本（如 "正在请求播放地址..."） */
+  @Trace public playbackStatusMessage: string = '';
 
   /**
    * Resolves a {@link SongItem} for the given queue index without keeping a full table in memory.

@@ -35,6 +35,8 @@ export struct ControlAreaComponent {
   @State isShowPlayList: boolean = false;
   @StorageLink('playMode') @Watch('syncPlayModeIndex') playMode: MusicPlayMode = PlayModeSwitchList[this.playModeIndex];
   @StorageLink('selectIndex') selectIndex: number = 0;
+  @StorageProp('playbackStatus') playbackStatus: string = 'idle';
+  @StorageProp('playbackStatusMessage') playbackStatusMessage: string = '';
   @StorageLink('isSilentMode') @Watch('isSilentModeChange') isSilentMode: boolean = false;
   @State speed: number = 1;
   @StorageLink('currentVolume') @Watch('currentVolumeChange') volume: number = 0;
@@ -130,6 +132,17 @@ export struct ControlAreaComponent {
             .fontFamily(PlayerConstants.FONT_FAMILY_BLACK).lineHeight('14vp')
         }
         .width(StyleConstants.FULL_WIDTH).justifyContent(FlexAlign.SpaceBetween)
+
+        // === 播放状态文字（紧贴时间行） ===
+        if (this.playbackStatus !== 'idle' && this.playbackStatus !== 'ready') {
+          Text(this.playbackStatusMessage || this.playbackStatus)
+            .fontSize(12)
+            .fontColor(Color.White)
+            .opacity(0.7)
+            .textAlign(TextAlign.Center)
+            .width('100%')
+            .margin({ top: 0 })
+        }
       }
       .margin({
         top: $r('app.float.slider_margin_top'),
@@ -185,7 +198,7 @@ export struct ControlAreaComponent {
         LazyForEach(new SongDataSource(this.songList), (item: SongItem, index: number) => {
           ListItem() {
             MusicListContainer({ item: item, index: index })
-              .reuseId(this.context?.resourceManager.getStringSync(item.title?.id));
+              .reuseId(`song_${item.id}`);
           }
         }, (item: SongItem, index: number) => item.toString() + index.toString())
       }

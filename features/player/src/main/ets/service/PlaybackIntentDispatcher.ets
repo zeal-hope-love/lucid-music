@@ -2,9 +2,10 @@
  * PlaybackIntentDispatcher - 播放意图分发器
  */
 import {
-  Logger, MusicAppState, PlaybackIntentState,
+  Logger, MusicAppState, PlaybackIntentState, SongItem,
   PlaybackIntentLogEvent, PlaybackShellConstants
 } from 'musicbasic'
+import { AudioPlayerController } from '../controller/AudioPlayerController'
 
 const TAG = 'PlaybackIntentDispatcher'
 
@@ -14,18 +15,31 @@ const TAG = 'PlaybackIntentDispatcher'
  * @param intentState 播放意图状态
  * @param onOpenPlayerUi 打开全屏播放器 UI 的回调
  */
-export function dispatchShellPlaybackIntent(
+export async function dispatchShellPlaybackIntent(
   appState: MusicAppState,
   intentState: PlaybackIntentState,
   onOpenPlayerUi: () => void
-): void {
+): Promise<void> {
   Logger.info(`${TAG}: dispatchShellPlaybackIntent version=${intentState.requestVersion}`)
 
   try {
-    // 处理远程播放
-    if (intentState.remoteUrl) {
-      Logger.info(`${TAG}: remote playback - url=${intentState.remoteUrl}`)
+    // 处理远程播放（搜索结果、音源等外部来源）
+    if (intentState.remoteUrl || intentState.remoteSongName) {
+      Logger.info(`${TAG}: remote playback - url=${intentState.remoteUrl}, name=${intentState.remoteSongName}`)
+      const songItem = new SongItem()
+      songItem.id = -Date.now()  // 负数 ID 区分远程歌曲
+      songItem.title = intentState.remoteSongName || '未知歌曲'
+      songItem.singer = intentState.remoteSongSinger || '未知歌手'
+      songItem.src = intentState.remoteUrl || ''
+      songItem.coverUrl = intentState.remoteSongCover || ''
+      songItem.lyricText = intentState.remoteLyricText || ''
+      appState.remoteSongItem = songItem
       intentState.resetRemote()
+
+      // 有播放地址则触发播放
+      if (songItem.src) {
+        await AudioPlayerController.getInstance().playCurrent()
+      }
     }
 
     // 处理本地歌曲播放

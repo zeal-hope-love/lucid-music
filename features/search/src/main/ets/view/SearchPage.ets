@@ -2,6 +2,7 @@
  * Lucid Music - 搜索页（覆盖层）+ 搜索结果（内嵌）
  * 顶部固定：返回键 + 搜索框
  * 下部切换：热门/联想 → 搜索结果
+ * 所有数据源接入真实 API
  */
 import { curves, display } from '@kit.ArkUI'
 import { CapsuleSegmentButtonV2, SegmentButtonV2Items, ColorMetrics } from '@kit.ArkUI'
@@ -21,6 +22,7 @@ export struct SearchPage {
 
   @Local viewModel: SearchViewModel = new SearchViewModel()
   @Local resultVM: SearchResultViewModel = new SearchResultViewModel()
+  @Local activeResultIndex: number = -1
   @Local isResultMode: boolean = false
   @Local menuItemId: number = -1
   @Local menuVisible: boolean = false
@@ -38,16 +40,31 @@ export struct SearchPage {
     }
   }
 
+  @Computed
+  get visibleHotSearches(): string[] {
+    if (this.viewModel.hotSearchExpanded || this.viewModel.hotSearches.length <= 24) {
+      return this.viewModel.hotSearches
+    }
+    return this.viewModel.hotSearches.slice(0, 24)
+  }
+
   @Monitor('platformSelectedIndex')
   onPlatformSelectedChange(): void {
+    const prevPlatform = this.viewModel.currentPlatform
     this.viewModel.currentPlatform = this.viewModel.platforms[this.platformSelectedIndex].platform
+    this.resultVM.currentPlatform = this.viewModel.platforms[this.platformSelectedIndex].platform
     if (this.isResultMode) {
       const kw = this.resultVM.keyword
       if (kw.length > 0) {
+        // 立即清空旧结果，避免切换时闪现前一平台内容
+        this.resultVM.clearResults()
         setTimeout(() => {
           this.resultVM.doSearch(kw)
-        }, 300)
+        }, 100)
       }
+    } else if (prevPlatform !== this.viewModel.currentPlatform) {
+      // 非结果模式下切换平台，刷新热门搜索
+      this.viewModel.refreshHotSearches()
     }
   }
 
@@ -59,6 +76,8 @@ export struct SearchPage {
       items.push(entry)
     }
     this.platformItems = new SegmentButtonV2Items(items)
+    // 初始化热门搜索
+    this.viewModel.initHotSearches()
   }
 
   @Monitor('isResultMode')
@@ -76,6 +95,7 @@ export struct SearchPage {
   private onBack(): void {
     if (this.isResultMode) {
       this.isResultMode = false
+      this.viewModel.resumeSuggesting()
     } else {
       this.getUIContext().animateTo({
         curve: curves.interpolatingSpring(0, 1, 342, 38)
@@ -107,11 +127,12 @@ export struct SearchPage {
     const kw = this.viewModel.doSearch()
     if (kw) {
       this.isResultMode = true
+      this.resultVM.currentPlatform = this.viewModel.currentPlatform
       this.resultVM.doSearch(kw)
     }
   }
 
-  // ==================== 热门搜索标签（常驻在 Tab 下方） ====================
+  // ==================== 热门搜索标签（折叠展开） ====================
 
   @Builder
   hotSearchTags(): void {
@@ -123,7 +144,7 @@ export struct SearchPage {
         .width('100%')
 
       Flex({ wrap: FlexWrap.Wrap }) {
-        ForEach(this.viewModel.hotSearches, (hotWord: string) => {
+        ForEach(this.visibleHotSearches, (hotWord: string) => {
           Text(hotWord)
             .fontSize(13)
             .fontColor($r('sys.color.ohos_id_color_text_secondary'))
@@ -138,6 +159,26 @@ export struct SearchPage {
         })
       }
       .width('100%')
+
+      // 超过6行时显示展开/收起箭头
+      if (this.viewModel.hotSearches.length > 24) {
+        Row() {
+          SymbolGlyph(this.viewModel.hotSearchExpanded
+            ? $r('sys.symbol.chevron_up')
+            : $r('sys.symbol.chevron_down'))
+            .fontSize(18)
+            .fontColor([$r('sys.color.ohos_id_color_text_tertiary')])
+          Text(this.viewModel.hotSearchExpanded ? '收起' : '展开更多')
+            .fontSize(12)
+            .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .padding({ top: 4, bottom: 4 })
+        .onClick(() => {
+          this.viewModel.hotSearchExpanded = !this.viewModel.hotSearchExpanded
+        })
+      }
     }
     .width('100%')
     .padding({ left: 16, right: 16, top: 8, bottom: 8 })
@@ -198,6 +239,8 @@ export struct SearchPage {
               .fontSize(15)
               .fontColor($r('sys.color.ohos_id_color_text_primary'))
               .layoutWeight(1)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
           }
           .width('100%')
           .height(48)
@@ -211,8 +254,8 @@ export struct SearchPage {
         }
       })
     }
-    .width('90%')
-    .margin({ top: 8 })
+    .width('100%')
+    .padding({ left: 16, right: 16 })
   }
 
   // ==================== 搜索结果列表 ====================
@@ -238,39 +281,92 @@ export struct SearchPage {
   @Builder
   resultList(): void {
     List() {
-      ForEach(this.resultVM.results, (item: SearchResultItem) => {
+      ForEach(this.resultVM.results, (item: SearchResultItem, index: number) => {
         ListItem() {
           Row() {
-            Column({ space: 4 }) {
+            // 序号
+            Text(`${index + 1}`)
+              .fontSize(13)
+              .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+              .width(28)
+              .textAlign(TextAlign.Center)
+
+            // 歌曲信息
+            Column({ space: 3 }) {
               Text(item.title as string)
                 .fontSize(15)
                 .fontWeight(FontWeight.Medium)
                 .fontColor($r('sys.color.ohos_id_color_text_primary'))
                 .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
-              Text(item.singer as string)
-                .fontSize(13)
-                .fontColor($r('sys.color.ohos_id_color_text_secondary'))
-                .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+
+              Row({ space: 6 }) {
+                if (item.quality.length > 0) {
+                  Text(item.quality)
+                    .fontSize(9)
+                    .fontColor(item.quality === '24bit' ? '#C8A145' :
+                      item.quality === 'SQ' ? '#D4A017' :
+                      item.quality === 'HQ' ? '#FF6B35' : '#999999')
+                    .fontWeight(FontWeight.Bold)
+                    .padding({ left: 3, right: 3, top: 1, bottom: 1 })
+                    .backgroundColor(item.quality === '24bit' ? '#1AC8A145' :
+                      item.quality === 'SQ' ? '#1AD4A017' :
+                      item.quality === 'HQ' ? '#1AFF6B35' : '#1A999999')
+                    .borderRadius(3)
+                }
+                Text(item.singer as string)
+                  .fontSize(12)
+                  .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+                  .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+                  .constraintSize({ maxWidth: this.screenWidth * 0.35 })
+
+                if (item.album.length > 0) {
+                  Text('·')
+                    .fontSize(12)
+                    .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+                  Text(item.album)
+                    .fontSize(12)
+                    .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+                    .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+                    .constraintSize({ maxWidth: this.screenWidth * 0.25 })
+                }
+              }
             }
             .alignItems(HorizontalAlign.Start).layoutWeight(1)
 
+            // 时长
+            if (item.duration !== '--:--') {
+              Text(item.duration)
+                .fontSize(12)
+                .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+                .margin({ right: 8 })
+            }
+
+            // 更多菜单
             Text('⋯')
               .fontSize(20)
               .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
               .fontWeight(FontWeight.Bold)
-              .padding({ left: 12, right: 4, top: 12, bottom: 12 })
+              .padding({ left: 4, right: 4, top: 12, bottom: 12 })
               .onClick(() => {
-                this.menuItemId = item.id
+                this.menuItemId = item.songId.length > 0 ?
+                  parseInt(item.songId) || index : index
                 this.menuVisible = !this.menuVisible
               })
               .bindMenu(
-                this.menuVisible && this.menuItemId === item.id,
+                this.menuVisible && this.menuItemId === (
+                  item.songId.length > 0 ? parseInt(item.songId) || index : index),
                 this.itemMenuBuilder(item)
               )
           }
           .width('100%')
-          .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-          .onClick(() => { this.resultVM.playSong(item) })
+          .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+          .borderRadius(8)
+          .backgroundColor(this.activeResultIndex === index ? 'rgba(0,0,0,0.06)' : Color.Transparent)
+          .onClick(() => {
+            this.activeResultIndex = index
+            this.resultVM.playSong(item)
+            setTimeout(() => { this.activeResultIndex = -1 }, 200)
+          })
         }
       })
     }
@@ -286,6 +382,7 @@ export struct SearchPage {
   private onSearchInputTap(): void {
     if (this.isResultMode) {
       this.isResultMode = false
+      this.viewModel.resumeSuggesting()
       setTimeout(() => {
         this.getUIContext().getFocusController().requestFocus('search_text_input')
       }, 200)
@@ -342,44 +439,51 @@ export struct SearchPage {
       })
         .margin({ left: 16, right: 16, top: 4, bottom: 4 })
 
-      // 热门搜索标签（仅初始状态显示，输入内容或结果模式时隐藏）
-      if (!this.isResultMode && this.viewModel.currentState === SearchState.HOT) {
-        this.hotSearchTags()
-      }
-
       // 下部内容区（Swiper 支持左右划切换平台）
       Swiper(this.swiperController) {
         ForEach(this.viewModel.platforms, (_platform: PlatformTab, index: number) => {
           Column() {
             if (this.isResultMode) {
-              if (this.resultVM.isLoading) {
+              // 按平台匹配渲染：只有当前平台才显示结果数据
+              if (this.resultVM.currentPlatform === _platform.platform) {
+                if (this.resultVM.isLoading) {
+                  LoadingProgress().width(40).height(40).margin({ top: 100 })
+                }
+                if (!this.resultVM.isLoading) {
+                  if (this.resultVM.results.length > 0) {
+                    this.resultList()
+                  } else {
+                    Column() {
+                      Text('暂无搜索结果')
+                        .fontSize(15)
+                        .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
+                        .margin({ top: 100 })
+                    }
+                    .width('100%').layoutWeight(1)
+                  }
+                }
+              } else {
+                // 非当前平台：显示加载态，避免闪烁旧数据
                 LoadingProgress().width(40).height(40).margin({ top: 100 })
               }
-              if (!this.resultVM.isLoading) {
-                if (this.resultVM.results.length > 0) {
-                  this.resultList()
-                } else {
-                  Column() {
-                    Text('暂无搜索结果')
-                      .fontSize(15)
-                      .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
-                      .margin({ top: 100 })
-                  }
-                  .width('100%').layoutWeight(1)
-                }
-              }
             } else {
-              if (this.viewModel.currentState === SearchState.HOT) {
-                Scroll() {
-                  this.searchHistoryContent()
+              Column() {
+                if (this.viewModel.currentState === SearchState.HOT) {
+                  Scroll() {
+                    Column() {
+                      this.hotSearchTags()
+                      this.searchHistoryContent()
+                    }
+                  }
+                  .width('100%').scrollBar(BarState.Off)
+                } else if (this.viewModel.currentState === SearchState.SUGGESTING) {
+                  Scroll() {
+                    this.suggestionContent()
+                  }
+                  .width('100%').scrollBar(BarState.Off)
                 }
-                .width('100%').layoutWeight(1).scrollBar(BarState.Off).margin({ top: 8 })
-              } else if (this.viewModel.currentState === SearchState.SUGGESTING) {
-                Scroll() {
-                  this.suggestionContent()
-                }
-                .width('100%').layoutWeight(1).scrollBar(BarState.Off).margin({ top: 4 })
               }
+              .width('100%').layoutWeight(1).justifyContent(FlexAlign.Start)
             }
           }
           .width('100%')

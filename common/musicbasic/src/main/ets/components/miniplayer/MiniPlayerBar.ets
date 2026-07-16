@@ -43,13 +43,36 @@ export struct MiniPlayerBar {
   }
 
   @Computed
-  get songTitle(): string {
-    return this.appState.getCurrentSongItem()?.title?.toString() ?? 'Lucid Music'
+  get titleArtistLine(): string {
+    const title = this.appState.getCurrentSongItem()?.title?.toString()
+    if (!title) {
+      return 'Lucid Music'
+    }
+    const singer = this.appState.getCurrentSongItem()?.singer?.toString()
+    return singer ? `${title} - ${singer}` : title
   }
 
   @Computed
-  get songSinger(): string {
-    return this.appState.getCurrentSongItem()?.singer?.toString() ?? '未在播放'
+  get subLine(): string {
+    // 非就绪状态：显示播放状态信息
+    const status = this.appState.playbackStatus
+    if (status === 'requesting_url' || status === 'preparing' || status === 'error') {
+      return this.appState.playbackStatusMessage || status
+    }
+    // 就绪/播放中：显示歌词第一句（去掉时间标签）
+    const lyric = this.appState.getCurrentSongItem()?.lyricText
+    if (!lyric) {
+      return ''
+    }
+    const firstLine = lyric.split('\n')[0] || lyric
+    // 去掉 LRC 时间标签 [xx:xx.xx] 和元数据标签 [ti:] [ar:] 等
+    return firstLine.replace(/\[.*?\]/g, '').trim()
+  }
+
+  @Computed
+  get subLineIsStatus(): boolean {
+    const status = this.appState.playbackStatus
+    return status === 'requesting_url' || status === 'preparing' || status === 'error'
   }
 
   // 解析播放列表为 SongItem 数组
@@ -157,17 +180,21 @@ export struct MiniPlayerBar {
       .padding(1).width(40).aspectRatio(1)
       .justifyContent(FlexAlign.Center)
 
-      Column({ space: 4 }) {
-        Text(this.songTitle)
+      Column({ space: 5 }) {
+        Text(this.titleArtistLine)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
           .fontSize($r('sys.float.Body_S'))
-        Text(this.songSinger)
-          .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
-          .fontWeight(FontWeight.Regular)
-          .fontColor($r('sys.color.font_secondary'))
-          .fontSize($r('sys.float.Caption_M'))
+        if (this.subLine) {
+          Text(this.subLine)
+            .textOverflow({ overflow: TextOverflow.MARQUEE }).maxLines(1)
+            .fontWeight(FontWeight.Regular)
+            .fontColor(this.subLineIsStatus ?
+              $r('sys.color.ohos_id_color_text_primary') :
+              $r('sys.color.font_secondary'))
+            .fontSize($r('sys.float.Caption_M'))
+        }
       }
       .padding({ left: 12 })
       .alignItems(HorizontalAlign.Start).layoutWeight(1)

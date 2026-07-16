@@ -18,12 +18,16 @@
  */
 export class SongItem {
   id: number = 0;
-  title: Resource | undefined;
-  singer: Resource | undefined;
+  title: Resource | string | undefined;
+  singer: Resource | string | undefined;
   mark: Resource = $r('app.string.page_show');
   label: Resource = $r('app.string.page_show');
   src: string = '';
   index: number = 0;
   lyric: string = '';
   isDarkBackground: boolean = false;
+  /** 远程歌曲封面 URL */
+  coverUrl: string = '';
+  /** 远程歌曲歌词文本（LRC 格式） */
+  lyricText: string = '';
 }

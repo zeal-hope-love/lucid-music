@@ -4,6 +4,7 @@
 import { common, wantAgent } from '@kit.AbilityKit'
 import { avSession } from '@kit.AVSessionKit'
 import { BusinessError } from '@kit.BasicServicesKit'
+import { http } from '@kit.NetworkKit'
 import { image } from '@kit.ImageKit'
 import { util } from '@kit.ArkTS'
 import { AppStorageV2 } from '@kit.ArkUI'
@@ -57,7 +58,9 @@ export class AVSessionController {
     artistStr: string | Resource,
     labelRes: Resource,
     lyricFile: string,
-    duration: number
+    duration: number,
+    lyricText?: string,
+    coverUrl?: string
   ): Promise<void> {
     if (!this.avSessionImpl) {
       return
@@ -69,15 +72,29 @@ export class AVSessionController {
       let lyric: string | undefined = undefined
 
       if (this.context) {
-        // 封面 PixelMap
+        // 封面：优先使用远程 URL
         try {
-          const fileData: Uint8Array = await this.context.resourceManager.getMediaContent(labelRes.id)
-          mediaImage = await image.createImageSource(fileData.buffer as ArrayBuffer).createPixelMap()
+          if (coverUrl && coverUrl.length > 0) {
+            const httpResp = await http.createHttp().request(coverUrl, {
+              method: http.RequestMethod.GET,
+              connectTimeout: 5000,
+              readTimeout: 5000
+            })
+            if (httpResp.responseCode === 200 && httpResp.result) {
+              const imageSource = image.createImageSource(httpResp.result as ArrayBuffer)
+              mediaImage = await imageSource.createPixelMap()
+            }
+          } else {
+            const fileData: Uint8Array = await this.context.resourceManager.getMediaContent(labelRes.id)
+            mediaImage = await image.createImageSource(fileData.buffer as ArrayBuffer).createPixelMap()
+          }
         } catch (_) {
           Logger.warn(`${TAG}: failed to get cover image`)
         }
-        // 歌词 LRC
-        if (lyricFile && lyricFile.length > 0) {
+        // 歌词：优先使用 lyricText，否则从文件读取
+        if (lyricText && lyricText.length > 0) {
+          lyric = lyricText
+        } else if (lyricFile && lyricFile.length > 0) {
           try {
             const lyricData: Uint8Array = await this.context.resourceManager.getRawFileContent(lyricFile)
             const decoder = util.TextDecoder.create('utf-8', { ignoreBOM: true })

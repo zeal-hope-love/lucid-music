@@ -65,13 +65,26 @@ export struct LyricsComponent {
       return;
     }
     this.syncFavoriteState();
-    this.context.resourceManager.getRawFileContent(this.songList[this.selectIndex].lyric)
+
+    const songItem = this.songList[this.selectIndex]
+
+    // 优先使用 lyricText（远程歌曲的直接歌词文本）
+    if (songItem.lyricText && songItem.lyricText.length > 0) {
+      this.mLrcEntryList = parseLrcLyric(songItem.lyricText)
+      return
+    }
+
+    // 回退：从文件系统读取歌词文件
+    if (!songItem.lyric || songItem.lyric.length === 0) {
+      return
+    }
+    this.context.resourceManager.getRawFileContent(songItem.lyric)
       .then((value: Uint8Array) => {
         let textDecoder = util.TextDecoder.create(PlayerConstants.ENCODING, { ignoreBOM: true });
         let stringData = textDecoder.decodeToString(value, { stream: false });
-        if (this.songList[this.selectIndex].lyric.endsWith(LyricFile.KRC)) {
+        if (songItem.lyric.endsWith(LyricFile.KRC)) {
           this.mLrcEntryList = parseKrcLyric(stringData);
-        } else if (this.songList[this.selectIndex].lyric.endsWith(LyricFile.LRC)) {
+        } else if (songItem.lyric.endsWith(LyricFile.LRC)) {
           this.mLrcEntryList = parseLrcLyric(stringData);
         }
       })
@@ -83,18 +96,36 @@ export struct LyricsComponent {
         Row() {
           Row() {
             if (!this.isTablet) {
-              Image(this.songList[this.selectIndex].label)
-                .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
-                  $r('app.float.label_width_sm') : $r('app.float.label_width'))
-                .borderRadius(6)
-                .shadow({
-                  radius: $r('app.float.shadow_radius'),
-                  color: $r('app.color.shadow_color'),
-                  offsetX: 0,
-                  offsetY: 8
-                })
-                .margin({ right: $r('app.float.label_margin_right') })
-                .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+              if (this.songList.length > 0 && this.selectIndex >= 0 &&
+                  this.selectIndex < this.songList.length &&
+                  this.songList[this.selectIndex] &&
+                  this.songList[this.selectIndex].coverUrl) {
+                Image(this.songList[this.selectIndex].coverUrl)
+                  .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
+                    $r('app.float.label_width_sm') : $r('app.float.label_width'))
+                  .borderRadius(6)
+                  .shadow({
+                    radius: $r('app.float.shadow_radius'),
+                    color: $r('app.color.shadow_color'),
+                    offsetX: 0,
+                    offsetY: 8
+                  })
+                  .margin({ right: $r('app.float.label_margin_right') })
+                  .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+              } else {
+                Image($r('app.media.ic_music_symbol'))
+                  .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
+                    $r('app.float.label_width_sm') : $r('app.float.label_width'))
+                  .borderRadius(6)
+                  .shadow({
+                    radius: $r('app.float.shadow_radius'),
+                    color: $r('app.color.shadow_color'),
+                    offsetX: 0,
+                    offsetY: 8
+                  })
+                  .margin({ right: $r('app.float.label_margin_right') })
+                  .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+              }
             }
             Column() {
               Text(this.songList[this.selectIndex].title)

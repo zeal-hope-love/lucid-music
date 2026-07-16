@@ -94,3 +94,10 @@ export { Platform, PlatformLabels, PlatformColors } from './src/main/ets/constan
 // New: 工具类
 export { splitHighlightKeyword, trimAndEllipsis } from './src/main/ets/util/StringUtil';
 export { formatDuration } from './src/main/ets/util/TimeUtil';
+
+// New: 音源管理（AudioSource）
+export { AudioSourceModel } from './src/main/ets/model/AudioSourceModel';
+export type { AudioSourceOrigin } from './src/main/ets/model/AudioSourceModel';
+export { AudioSourceDb } from './src/main/ets/service/AudioSourceDb';
+export { AudioSourceManager } from './src/main/ets/service/AudioSourceManager';
+export type { ActiveScriptResult, ImportResult } from './src/main/ets/service/AudioSourceManager';

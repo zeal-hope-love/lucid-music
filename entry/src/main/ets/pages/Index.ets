@@ -6,7 +6,7 @@
 import { AppStorageV2, curves, display } from '@kit.ArkUI'
 import {
   AppStorageKeys, BottomBarVisibility, CurrentTabState, MusicAppState, MusicDbApi,
-  PlaybackIntentState, RouterUrlConstants
+  PlaybackIntentState, RouterUrlConstants, AudioSourceManager
 } from 'musicbasic'
 import { LucidTabBar, MiniPlayerBar } from 'musicbasic'
 import {
@@ -49,6 +49,24 @@ struct Index {
     JsVmBridge.getInstance().init()
     AudioPlayerController.getInstance().initAVPlayer()
     this.wireAVSessionCallbacks()
+    this.autoInitAudioSource()
+  }
+
+  /** 启动时自动激活第一个已启用的音源（若无则激活第一个） */
+  private async autoInitAudioSource(): Promise<void> {
+    try {
+      const manager = AudioSourceManager.getInstance()
+      const activeScript = await manager.getActiveScript()
+      if (activeScript) {
+        return // 已有激活的音源
+      }
+      const all = await manager.getAll()
+      if (all.length > 0) {
+        await manager.toggleEnabled(all[0].id, true)
+      }
+    } catch (_) {
+      // 静默处理
+    }
   }
 
   private wireAVSessionCallbacks(): void {
@@ -124,7 +142,7 @@ struct Index {
         PlaybackPage()
       }
       .hideTitleBar(true)
-      .transition(TransitionEffect.IDENTITY.animation({ duration: 0 }))
+      .transition(TransitionEffect.OPACITY.animation({ duration: 50 }))
       .onAppear(() => {
         this.barVisibility.tabBarVisible = false
         this.barVisibility.miniPlayerVisible = false
@@ -228,6 +246,8 @@ struct Index {
                 return
               }
               AppStorage.setOrCreate('playbackEntering', true)
+              // 预设默认深色背景，避免进入播放页时闪烁黑色
+              AppStorage.setOrCreate('imageColor', 'rgba(18, 18, 25, 1.00)')
               this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYBACK, undefined), { animated: false })
             }
           })

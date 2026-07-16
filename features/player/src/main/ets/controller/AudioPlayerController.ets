@@ -69,11 +69,13 @@ export class AudioPlayerController {
     }
     if (!url) {
       Logger.error(`${TAG}: url is empty`)
+      this.syncPlaybackStatus('error', '播放地址为空')
       return
     }
     if (this.currentState !== 'idle') {
       await this.avPlayer.reset()
     }
+    this.syncPlaybackStatus('preparing', '正在准备播放...')
     if (url.startsWith('http://') || url.startsWith('https://')) {
       this.avPlayer.url = url
     } else {
@@ -149,6 +151,7 @@ export class AudioPlayerController {
         break
     }
     this.appState.selectIndex = nextIndex
+    this.appState.remoteSongItem = null
     AppStorage.setOrCreate('selectIndex', nextIndex)
     this.playCurrent()
   }
@@ -173,6 +176,7 @@ export class AudioPlayerController {
         break
     }
     this.appState.selectIndex = prevIndex
+    this.appState.remoteSongItem = null
     AppStorage.setOrCreate('selectIndex', prevIndex)
     this.playCurrent()
   }
@@ -273,6 +277,7 @@ export class AudioPlayerController {
         case 'prepared':
           this.appState.progressMax = this.avPlayer!.duration
           this.appState.totalTime = MediaTools.msToCountdownTime(this.avPlayer!.duration)
+          this.syncPlaybackStatus('ready', '')
           await this.initSessionMetadata()
           if (this.waitPlay) {
             await this.avPlayer!.play()
@@ -302,6 +307,7 @@ export class AudioPlayerController {
     }
     this.avPlayer.on('error', (error: BusinessError) => {
       Logger.error(`${TAG}: error code=${error.code} msg=${error.message}`)
+      this.syncPlaybackStatus('error', `播放失败: ${error.message || '未知错误'}`)
     })
   }
 
@@ -376,8 +382,14 @@ export class AudioPlayerController {
         const title = typeof songItem.title === 'string' ? songItem.title : '未知歌曲'
         const artist = typeof songItem.singer === 'string' ? songItem.singer : '未知歌手'
         this.avSessionController.updateMetadata(
-          songItem.id, title, artist, songItem.label, songItem.lyric, this.appState.progressMax
+          songItem.id, title, artist, songItem.label, songItem.lyric,
+          this.appState.progressMax, songItem.lyricText || '', songItem.coverUrl || ''
         )
+        // 远程歌曲：预设置默认深色背景（避免闪烁）
+        if (songItem.coverUrl) {
+          this.appState.imageColor = 'rgba(20, 20, 30, 1.00)'
+          AppStorage.setOrCreate('imageColor', 'rgba(20, 20, 30, 1.00)')
+        }
       }
     } catch (e) {
       Logger.warn(`${TAG}: AVSession init skipped: ${JSON.stringify(e)}`)
@@ -388,5 +400,12 @@ export class AudioPlayerController {
     this.appState.isPlay = isPlay
     this.avSessionController.setPlayState(isPlay)
     AppStorage.setOrCreate('isPlay', isPlay)
+  }
+
+  private syncPlaybackStatus(status: string, message: string): void {
+    this.appState.playbackStatus = status
+    this.appState.playbackStatusMessage = message
+    AppStorage.setOrCreate('playbackStatus', status)
+    AppStorage.setOrCreate('playbackStatusMessage', message)
   }
 }

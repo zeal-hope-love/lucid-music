@@ -249,8 +249,15 @@ export struct PlayerInfoComponent {
     if (!this.context) {
       return;
     }
-    ColorConversion.setSysBarLightBackground(this.songList[this.selectIndex].isDarkBackground);
-    this.context.resourceManager.getMediaContent(this.songList[this.selectIndex].label.id)
+    if (!this.songList || this.selectIndex < 0 || this.selectIndex >= this.songList.length) {
+      return;
+    }
+    const songItem = this.songList[this.selectIndex]
+    if (!songItem || !songItem.label) {
+      return;
+    }
+    ColorConversion.setSysBarLightBackground(songItem.isDarkBackground);
+    this.context.resourceManager.getMediaContent(songItem.label.id)
       .then((value: Uint8Array) => {
         let buffer = value.buffer as ArrayBuffer;
         image.createImageSource(buffer).createPixelMap().then((pixelMap) => {

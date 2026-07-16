@@ -3,9 +3,8 @@
  */
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit'
 import { window } from '@kit.ArkUI'
-import { getAppRuntime, Logger, WindowUtil } from 'musicbasic'
+import { getAppRuntime, Logger, WindowUtil, AudioSourceManager } from 'musicbasic'
 import { MediaService, JsVmBridge } from 'player'
-import { AudioSourceManager } from 'search'
 import { BusinessError } from '@kit.BasicServicesKit'
 
 export default class EntryAbility extends UIAbility {
