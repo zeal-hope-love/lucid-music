@@ -4,7 +4,7 @@
  */
 import { AppStorageV2 } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
-import { AppStorageKeys, MusicAppState } from 'musicbasic'
+import { AppStorageKeys, getStatusBarTopVpFromWindowUtil, MusicAppState, MusicDbApi, WindowUtil } from 'musicbasic'
 import { PlayerInfoComponent } from './PlayerInfoComponent'
 import { MusicPlayMode, DEFAULT_VOLUME } from '../constants/PlayerConstants'
 import { BreakpointConstants } from '../constants/BreakpointConstants'
@@ -31,10 +31,12 @@ export struct PlaybackPage {
     AppStorage.setOrCreate('currentBreakpoint', BreakpointConstants.BREAKPOINT_SM)
     AppStorage.setOrCreate('isFoldFull', false)
     AppStorage.setOrCreate('pageShowTime', 0)
-    AppStorage.setOrCreate('topHeight', 0)
-    AppStorage.setOrCreate('bottomHeight', 0)
+    AppStorage.setOrCreate('topHeight', getStatusBarTopVpFromWindowUtil())
+    AppStorage.setOrCreate('bottomHeight', WindowUtil.getInstance().mainWindowInfo.navigationBarBottomVp)
     AppStorage.setOrCreate('imageColor', 'rgba(0, 0, 2, 1.00)')
-    AppStorage.setOrCreate('isFavorite', false)
+    const songItem = this.appState.resolveSongAtQueueIndex(this.appState.selectIndex)
+    const initFav = songItem ? MusicDbApi.getInstance().isFavorite(songItem.id) : false
+    AppStorage.setOrCreate('isFavorite', initFav)
     AppStorage.setOrCreate('selectIndex', this.appState.selectIndex)
     AppStorage.setOrCreate('isPlay', this.appState.isPlay)
     AppStorage.setOrCreate('progress', this.appState.progress)

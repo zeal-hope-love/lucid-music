@@ -80,6 +80,10 @@ export class RouterUrlConstants {
   public static readonly SEARCH: string = 'Search';
   /** Playback page (future) */
   public static readonly PLAYBACK: string = 'Playback';
+  /** Settings page */
+  public static readonly SETTINGS: string = 'Settings';
+  /** Music list page (本地/最近播放/收藏) */
+  public static readonly MUSIC_LIST: string = 'MusicList';
   /** Playlist detail page. */
   public static readonly PLAYLIST_DETAIL: string = 'PlaylistDetailPage';
   /** Split-column playlist (wide) page. */

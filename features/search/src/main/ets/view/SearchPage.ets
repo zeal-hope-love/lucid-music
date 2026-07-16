@@ -5,10 +5,7 @@
  */
 import { curves, display } from '@kit.ArkUI'
 import { CapsuleSegmentButtonV2, SegmentButtonV2Items, ColorMetrics } from '@kit.ArkUI'
-import {
-  RouterUrlConstants
-} from 'musicbasic'
-import { AreaWithHdsTabBar, SearchInputArea, MiniPlayerBar } from 'musicbasic'
+import { AreaWithHdsTabBar, SearchInputArea } from 'musicbasic'
 import { SearchViewModel, SearchState, PlatformTab } from '../viewmodel/SearchViewModel'
 import { SearchResultViewModel } from '../viewmodel/SearchResultViewModel'
 import { SearchResultItem } from '../model/SearchResultItem'
@@ -298,43 +295,42 @@ export struct SearchPage {
   // ==================== UI ====================
 
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
-      Column() {
-        // 顶部固定栏：返回键 + 搜索框
-        Row({ space: 8 }) {
-          AreaWithHdsTabBar({
-            barHeight: 40,
-            barWidth: 40,
-            barPlacement: BarPosition.End,
-            bottomMargin: 8,
-            content: (): void => { this.backButtonContent() }
-          })
+    Column() {
+      // 顶部固定栏：返回键 + 搜索框
+      Row({ space: 8 }) {
+        AreaWithHdsTabBar({
+          barHeight: 40,
+          barWidth: 40,
+          barPlacement: BarPosition.End,
+          bottomMargin: 8,
+          content: (): void => { this.backButtonContent() }
+        })
 
-          SearchInputArea({
-            isFollow: false,
-            autoFocus: !this.isResultMode,
-            keyword: this.viewModel.keyword,
-            placeholder: this.isResultMode ? this.resultVM.keyword : '搜歌曲、歌手、专辑',
-            onKeywordChange: (text: string): void => {
-              this.viewModel.updateKeyword(text)
-            },
-            onSearch: (): void => {
-              this.doSearch()
-            },
-            onClear: (): void => {
-              this.viewModel.clear()
-            },
-            onTap: (): void => {
-              this.onSearchInputTap()
-            }
-          })
-          .layoutWeight(1)
-        }
-        .width('100%')
-        .height(56)
-        .margin({ top: 56 })
-        .alignItems(VerticalAlign.Center)
-        .padding({ left: 8, right: 12 })
+        SearchInputArea({
+          isFollow: false,
+          autoFocus: !this.isResultMode,
+          keyword: this.viewModel.keyword,
+          placeholder: this.isResultMode ? this.resultVM.keyword : '搜歌曲、歌手、专辑',
+          onKeywordChange: (text: string): void => {
+            this.viewModel.updateKeyword(text)
+          },
+          onSearch: (): void => {
+            this.doSearch()
+          },
+          onClear: (): void => {
+            this.viewModel.clear()
+          },
+          onTap: (): void => {
+            this.onSearchInputTap()
+          }
+        })
+        .layoutWeight(1)
+      }
+      .width('100%')
+      .height(56)
+      .margin({ top: 56 })
+      .alignItems(VerticalAlign.Center)
+      .padding({ left: 8, right: 12 })
 
       // 音乐平台切换（分段按钮）
       CapsuleSegmentButtonV2({
@@ -399,22 +395,10 @@ export struct SearchPage {
       .onChange((index: number) => {
         this.platformSelectedIndex = index
       })
-      }
-      .width('100%')
-      .height('100%')
-      .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
-      .padding({ bottom: 126 })
-
-      // === 底部迷你播放条 ===
-      MiniPlayerBar({
-        barWidth: this.screenWidth - 40,
-        bottomOffset: 36,
-        onTap: (): void => {
-          this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYBACK, undefined))
-        }
-      })
     }
     .width('100%')
     .height('100%')
+    .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
+    .padding({ bottom: 72 })
   }
 }

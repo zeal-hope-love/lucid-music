@@ -60,6 +60,7 @@ export { OptionItem } from './src/main/ets/model/OptionItem';
 export { MusicAppState } from './src/main/ets/model/MusicAppState';
 export { PlaybackIntentState } from './src/main/ets/model/PlaybackIntentState';
 export { CurrentTabState } from './src/main/ets/model/CurrentTabState';
+export { BottomBarVisibility } from './src/main/ets/model/BottomBarVisibility';
 export { SongDataSource } from './src/main/ets/model/SongDataSource';
 
 // util

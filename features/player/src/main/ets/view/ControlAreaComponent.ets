@@ -33,7 +33,7 @@ export struct ControlAreaComponent {
   @StorageLink('pageShowTime') pageShowTime: number = 0;
   @StorageLink('songList') songList: SongItem[] = [];
   @State isShowPlayList: boolean = false;
-  @StorageLink('playMode') playMode: MusicPlayMode = PlayModeSwitchList[this.playModeIndex];
+  @StorageLink('playMode') @Watch('syncPlayModeIndex') playMode: MusicPlayMode = PlayModeSwitchList[this.playModeIndex];
   @StorageLink('selectIndex') selectIndex: number = 0;
   @StorageLink('isSilentMode') @Watch('isSilentModeChange') isSilentMode: boolean = false;
   @State speed: number = 1;
@@ -58,6 +58,13 @@ export struct ControlAreaComponent {
     this.playerController.setVolume(this.volume / 100)
   }
 
+  syncPlayModeIndex() {
+    const idx = PlayModeSwitchList.indexOf(this.playMode)
+    if (idx >= 0) {
+      this.playModeIndex = idx
+    }
+  }
+
   switchPlayMode() {
     if (this.playModeIndex === PlayModeSwitchList.length - 1) {
       this.playModeIndex = 0;
@@ -77,58 +84,6 @@ export struct ControlAreaComponent {
 
   build() {
     Column() {
-      // === 工具栏：播放模式/歌单/静音/倍速/音量 ===
-      Row() {
-        SymbolGlyph(this.playMode === MusicPlayMode.ORDER ? $r('sys.symbol.order_play') :
-          this.playMode === MusicPlayMode.RANDOM ? $r('sys.symbol.shuffle') : $r('sys.symbol.repeat_1'))
-          .fontSize(26).renderingStrategy(SymbolRenderingStrategy.SINGLE).fontColor([Color.White]).opacity(0.86)
-          .onClick(() => { this.switchPlayMode() })
-
-        SymbolGlyph($r('sys.symbol.music_note_list'))
-          .fontSize(26).renderingStrategy(SymbolRenderingStrategy.SINGLE).fontColor([Color.White]).opacity(0.86)
-          .onClick(() => { this.isShowPlayList = true; })
-          .bindSheet($$this.isShowPlayList, this.musicListBuilder(), {
-            detents: [SheetSize.MEDIUM], dragBar: false, showClose: true, preferType: SheetType.CENTER,
-            onWillAppear: () => { this.scroller.scrollToIndex(this.selectIndex, false, ScrollAlign.CENTER); }
-          })
-
-        SymbolGlyph(this.isSilentMode ? $r('sys.symbol.bell_slash') : $r('sys.symbol.bell'))
-          .fontSize(26).renderingStrategy(SymbolRenderingStrategy.SINGLE).fontColor([Color.White]).opacity(0.86)
-          .onClick(() => {
-            this.isSilentMode = !this.isSilentMode;
-            if (this.isSilentMode) {
-              this.volume = 0;
-            } else {
-              let preVolume: number = PreferencesUtil.getInstance().getValue(VOLUME_ID) as number;
-              this.volume = preVolume ? preVolume : 10;
-            }
-            this.playerController.setMuted(this.isSilentMode)
-          })
-
-        SymbolGlyph($r('sys.symbol.video_speed'))
-          .fontSize(26).renderingStrategy(SymbolRenderingStrategy.SINGLE).fontColor([Color.White]).opacity(0.86)
-          .onClick(() => { this.isShowSpeedBuild = true; })
-          .bindSheet($$this.isShowSpeedBuild, this.speedBuilder(), {
-            detents: [SheetSize.FIT_CONTENT], dragBar: false, showClose: true, preferType: SheetType.CENTER
-          })
-
-        SymbolGlyph($r('sys.symbol.speaker_wave_3'))
-          .fontSize(26).renderingStrategy(SymbolRenderingStrategy.SINGLE).fontColor([Color.White]).opacity(0.86)
-          .bindSheet($$this.isShowVolumeBuild, this.volumeBuilder(), {
-            detents: [SheetSize.FIT_CONTENT], dragBar: false, showClose: true, preferType: SheetType.CENTER,
-            onWillAppear: () => {
-              if (this.isSilentMode) {
-                this.volume = 0;
-              } else {
-                this.volume = this.playerController.getCurrentVolume();
-              }
-            }
-          })
-          .onClick(() => { this.isShowVolumeBuild = true; })
-      }
-      .width(StyleConstants.FULL_WIDTH)
-      .justifyContent(FlexAlign.SpaceBetween)
-
       // === 进度条（SlidingStyle.NONE + springMotion 拖动动画）===
       Column() {
         Slider({ min: 0, max: this.max, step: 1, style: SliderStyle.NONE, value: this.value })
@@ -182,8 +137,13 @@ export struct ControlAreaComponent {
           $r('app.float.slider_margin_bottom_lg') : $r('app.float.slider_margin_bottom')
       })
 
-      // === 播放控制按钮（avplayer-cpp Image 图标）===
+      // === 播放控制按钮 ===
       Row() {
+        SymbolGlyph(this.playMode === MusicPlayMode.ORDER ? $r('sys.symbol.order_play') :
+          this.playMode === MusicPlayMode.RANDOM ? $r('sys.symbol.shuffle') : $r('sys.symbol.repeat_1'))
+          .fontSize(20).renderingStrategy(SymbolRenderingStrategy.SINGLE).fontColor([Color.White]).opacity(0.5)
+          .onClick(() => { this.switchPlayMode() })
+
         Image($r('app.media.ic_public_forward'))
           .controlImageBuilder()
           .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ?
@@ -205,9 +165,16 @@ export struct ControlAreaComponent {
           .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ?
             $r('app.float.control_width_lg') : $r('app.float.control_width'))
           .onClick(() => { this.playerController.playNext(); this.pageShowTime = 0; })
+
+        SymbolGlyph($r('sys.symbol.music_note_list'))
+          .fontSize(20).renderingStrategy(SymbolRenderingStrategy.SINGLE).fontColor([Color.White]).opacity(0.5)
+          .onClick(() => { this.isShowPlayList = true; })
+          .bindSheet($$this.isShowPlayList, this.musicListBuilder(), {
+            detents: [SheetSize.MEDIUM], dragBar: false, showClose: true, preferType: SheetType.CENTER,
+            onWillAppear: () => { this.scroller.scrollToIndex(this.selectIndex, false, ScrollAlign.CENTER); }
+          })
       }
       .width(StyleConstants.FULL_WIDTH).justifyContent(FlexAlign.SpaceBetween)
-      .padding({ left: $r('app.float.control_padding'), right: $r('app.float.control_padding') })
     }
   }
 

@@ -15,9 +15,9 @@
 
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
-import { ControlAreaComponent } from './ControlAreaComponent';
 import { PlayerConstants } from '../constants/PlayerConstants';
 import { BreakpointType } from '../utils/BreakpointSystem';
+import { AVSessionController } from '../controller/AVSessionController';
 import { StyleConstants } from '../constants/StyleConstants';
 import { BreakpointConstants } from '../constants/BreakpointConstants';
 import { LyricFile, LyricScrollEffect, LyricTopPosition } from '../constants/LyricConst';
@@ -25,6 +25,7 @@ import { LrcEntry } from '../viewmodel/LrcEntry';
 import { SongItem } from '../viewmodel/SongData';
 import { parseKrcLyric, parseLrcLyric } from '../utils/LrcUtils';
 import LrcView from './LrcView';
+import { MusicDbApi } from 'musicbasic';
 
 @Component
 export struct LyricsComponent {
@@ -38,14 +39,21 @@ export struct LyricsComponent {
   @StorageLink('songList') songList: SongItem[] = [];
   @StorageProp('selectIndex') @Watch('getLrcEntryList') selectIndex: number = 0;
   @StorageLink('isPlay') isPlay: boolean = false;
-  @Link isShowControl: boolean;
+  @StorageLink('isFavorite') isFavorite: boolean = false;
   @Link isTablet: boolean;
-  @State intervalID: number = 0;
-  @State pageShowTime: number = 0;
+  @Prop follow: boolean = false;
   private context: common.UIAbilityContext | undefined = AppStorage.get('context');
 
   aboutToAppear() {
     this.getLrcEntryList();
+    this.syncFavoriteState();
+  }
+
+  syncFavoriteState(): void {
+    if (this.songList.length > 0 && this.selectIndex < this.songList.length) {
+      const songId = this.songList[this.selectIndex].id
+      this.isFavorite = MusicDbApi.getInstance().isFavorite(songId)
+    }
   }
 
   getLrcEntryList() {
@@ -56,6 +64,7 @@ export struct LyricsComponent {
     if (!this.songList || this.selectIndex < 0 || this.selectIndex >= this.songList.length) {
       return;
     }
+    this.syncFavoriteState();
     this.context.resourceManager.getRawFileContent(this.songList[this.selectIndex].lyric)
       .then((value: Uint8Array) => {
         let textDecoder = util.TextDecoder.create(PlayerConstants.ENCODING, { ignoreBOM: true });
@@ -72,45 +81,68 @@ export struct LyricsComponent {
     Column() {
       if (this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM) {
         Row() {
-          if (!this.isTablet) {
-            Image(this.songList[this.selectIndex].label)
-              .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
-                $r('app.float.label_width_sm') : $r('app.float.label_width'))
-              .borderRadius($r('app.float.label_border'))
-              .margin({ right: $r('app.float.label_margin_right') })
+          Row() {
+            if (!this.isTablet) {
+              Image(this.songList[this.selectIndex].label)
+                .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
+                  $r('app.float.label_width_sm') : $r('app.float.label_width'))
+                .borderRadius(6)
+                .shadow({
+                  radius: $r('app.float.shadow_radius'),
+                  color: $r('app.color.shadow_color'),
+                  offsetX: 0,
+                  offsetY: 8
+                })
+                .margin({ right: $r('app.float.label_margin_right') })
+                .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+            }
+            Column() {
+              Text(this.songList[this.selectIndex].title)
+                .fontSize(new BreakpointType({
+                  sm: $r('app.float.title_font_sm'),
+                  md: $r('app.float.title_font_md'),
+                  lg: $r('app.float.title_font_lg')
+                }).getValue(this.currentBreakpoint))
+                .fontColor(Color.White)
+                .fontWeight(PlayerConstants.FONT_WEIGHT_700)
+                .fontFamily(PlayerConstants.FONT_FAMILY_BOLD)
+                .constraintSize({ minWidth: 200 })
+                .geometryTransition('PLAYBACK_TITLE_TRANSITION', { follow: this.follow })
+              Text(this.songList[this.selectIndex].singer)
+                .fontSize(new BreakpointType({
+                  sm: $r('app.float.singer_font_sm'),
+                  md: $r('app.float.singer_font_md'),
+                  lg: $r('app.float.singer_font_lg')
+                }).getValue(this.currentBreakpoint))
+                .fontColor(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ?
+                  $r('app.color.singer_text') : $r('sys.color.ohos_id_color_text_hint_contrary'))
+                .fontWeight(PlayerConstants.FONT_WEIGHT_500)
+                .fontFamily(PlayerConstants.FONT_FAMILY_MEDIUM)
+                .margin({ top: $r('app.float.singer_margin_top') })
+                .constraintSize({ minWidth: 200 })
+                .geometryTransition('PLAYBACK_SINGER_TRANSITION', { follow: this.follow })
+            }
+            .alignItems(HorizontalAlign.Start)
           }
-          Column() {
-            Text(this.songList[this.selectIndex].title)
-              .fontSize(new BreakpointType({
-                sm: $r('app.float.title_font_sm'),
-                md: $r('app.float.title_font_md'),
-                lg: $r('app.float.title_font_lg')
-              }).getValue(this.currentBreakpoint))
-              .fontColor(Color.White)
-              .fontWeight(PlayerConstants.FONT_WEIGHT_700)
-              .fontFamily(PlayerConstants.FONT_FAMILY_BOLD)
-            Text(this.songList[this.selectIndex].singer)
-              .fontSize(new BreakpointType({
-                sm: $r('app.float.singer_font_sm'),
-                md: $r('app.float.singer_font_md'),
-                lg: $r('app.float.singer_font_lg')
-              }).getValue(this.currentBreakpoint))
-              .fontColor(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ?
-                $r('app.color.singer_text') : $r('sys.color.ohos_id_color_text_hint_contrary'))
-              .fontWeight(PlayerConstants.FONT_WEIGHT_500)
-              .fontFamily(PlayerConstants.FONT_FAMILY_MEDIUM)
-              .margin({ top: $r('app.float.singer_margin_top') })
-          }
-          .alignItems(HorizontalAlign.Start)
+
+          SymbolGlyph(this.isFavorite ? $r('sys.symbol.heart_fill') : $r('sys.symbol.heart'))
+            .fontSize(26)
+            .renderingStrategy(SymbolRenderingStrategy.SINGLE)
+            .fontColor([this.isFavorite ? Color.Red : Color.White])
+            .opacity(0.86)
+            .geometryTransition('PLAYBACK_FAVORITE_TRANSITION', { follow: this.follow })
+            .onClick(() => {
+              const songId = this.songList[this.selectIndex].id
+              const nowFav = MusicDbApi.getInstance().toggleFavorite(songId)
+              this.isFavorite = nowFav
+              AVSessionController.getInstance().updateFavoriteState(songId.toString(), nowFav)
+            })
         }
         .width(StyleConstants.FULL_WIDTH)
-        .justifyContent(FlexAlign.Start)
+        .justifyContent(FlexAlign.SpaceBetween)
+        .alignItems(VerticalAlign.Center)
         .margin({
-          top: new BreakpointType({
-            sm: $r('app.float.info_margin_top_sm'),
-            md: $r('app.float.zero_margin'),
-            lg: $r('app.float.zero_margin')
-          }).getValue(this.currentBreakpoint),
+          top: 16,
           bottom: $r('app.float.info_margin_bottom')
         })
       }
@@ -181,43 +213,7 @@ export struct LyricsComponent {
           .layoutWeight(1)
       }
 
-      Row() {
-        SymbolGlyph($r('sys.symbol.character_textbox'))
-          .fontSize(new BreakpointType({
-            sm: $r('app.float.lyrics_width_sm'),
-            md: $r('app.float.lyrics_width_md'),
-            lg: $r('app.float.lyrics_width_lg')
-          }).getValue(this.currentBreakpoint))
-          .fontColor([Color.White])
-          .opacity(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ? 1 : 0.86)
-      }
-      .width(StyleConstants.FULL_WIDTH)
-      .height($r('app.float.control_icon_height'))
-      .justifyContent(FlexAlign.End)
-      .margin({
-        top: $r('app.float.lyric_margin_top'),
-        bottom: new BreakpointType({
-          sm: $r('app.float.lyric_margin_bottom_sm'),
-          md: $r('app.float.lyric_margin_bottom_md'),
-          lg: $r('app.float.lyric_margin_bottom_lg')
-        }).getValue(this.currentBreakpoint),
-        right: new BreakpointType({
-          sm: $r('app.float.lyric_margin_right_sm'),
-          md: $r('app.float.lyric_margin_right_md'),
-          lg: $r('app.float.lyric_margin_right_lg')
-        }).getValue(this.currentBreakpoint)
-      })
-
-      if (this.isShowControl) {
-        ControlAreaComponent()
-          .margin({
-            top: $r('app.float.control_lyric_margin'),
-            bottom: $r('app.float.music_component_bottom')
-          })
-      }
+      // （歌词底部 icon 已移除，歌词区域撑满）
     }
-    .onClick(() => {
-      this.pageShowTime = 0;
-    })
   }
 }

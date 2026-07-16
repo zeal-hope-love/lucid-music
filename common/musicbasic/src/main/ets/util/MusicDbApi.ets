@@ -149,6 +149,57 @@ export class MusicDbApi {
     return rows;
   }
 
+  /** Resolves an id list to SongApiDto list in the given order, skipping missing ids. */
+  private idsToSongDtos(ids: number[]): SongApiDto[] {
+    const out: SongApiDto[] = [];
+    for (let i = 0; i < ids.length; i++) {
+      const dto = this.getSongById(ids[i]);
+      if (dto !== undefined) {
+        out.push(dto);
+      }
+    }
+    return out;
+  }
+
+  // ==================== 最近播放 ====================
+
+  /** Records a song as recently played (dedup + prepend). */
+  public addRecentPlay(songId: number): void {
+    this.store.addRecentPlay(songId);
+  }
+
+  /** @returns Recently played songs in order (most recent first). */
+  public getRecentPlaySongs(): SongApiDto[] {
+    return this.idsToSongDtos(this.store.recentPlayIds);
+  }
+
+  /** @returns Count of recently played songs. */
+  public getRecentPlayCount(): number {
+    return this.store.recentPlayIds.length;
+  }
+
+  // ==================== 收藏 ====================
+
+  /** Toggles favorite. Returns true if now favorited, false if removed. */
+  public toggleFavorite(songId: number): boolean {
+    return this.store.toggleFavorite(songId);
+  }
+
+  /** @returns Whether the song id is currently favorited. */
+  public isFavorite(songId: number): boolean {
+    return this.store.isFavorite(songId);
+  }
+
+  /** @returns Favorited songs in insertion order. */
+  public getFavoriteSongs(): SongApiDto[] {
+    return this.idsToSongDtos(this.store.favoriteSongIds);
+  }
+
+  /** @returns Count of favorited songs. */
+  public getFavoriteCount(): number {
+    return this.store.favoriteSongIds.length;
+  }
+
   /** Maps a {@link SongRow} to {@link SongApiDto}. */
   private rowToSongApiDto(row: SongRow): SongApiDto {
     const dto = new SongApiDto();

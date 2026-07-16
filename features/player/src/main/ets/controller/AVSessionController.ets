@@ -4,8 +4,12 @@
 import { common, wantAgent } from '@kit.AbilityKit'
 import { avSession } from '@kit.AVSessionKit'
 import { BusinessError } from '@kit.BasicServicesKit'
-import { Logger } from 'musicbasic'
-import { MusicPlayMode } from '../constants/PlayerConstants'
+import { image } from '@kit.ImageKit'
+import { util } from '@kit.ArkTS'
+import { AppStorageV2 } from '@kit.ArkUI'
+import { AppStorageKeys, CurrentTabState, Logger, MusicDbApi } from 'musicbasic'
+import { MusicPlayMode, PlayModeSwitchList } from '../constants/PlayerConstants'
+import { AudioPlayerController } from './AudioPlayerController'
 
 const TAG = 'AVSessionController'
 
@@ -20,8 +24,9 @@ export class AVSessionController {
   public onNextRequested?: () => void
   public onPrevRequested?: () => void
   public onSeekRequested?: (ms: number) => void
-  public onSetLoopModeRequested?: (loopMode: avSession.LoopMode) => void
-  public onToggleFavoriteRequested?: (assetId: string) => void
+  /** 用于 favoriteVersion 递增通知 MusicListPage 刷新 */
+  private currentTabState: CurrentTabState =
+    AppStorageV2.connect(CurrentTabState, AppStorageKeys.CURRENT_TAB_STATE, () => new CurrentTabState())!
 
   public static getInstance(): AVSessionController {
     if (!AVSessionController.instance) {
@@ -46,20 +51,60 @@ export class AVSessionController {
     this.setListenerForControllerEvents()
   }
 
-  public updateMetadata(title: string, artist: string, duration: number): void {
+  public async updateMetadata(
+    songId: number,
+    titleStr: string | Resource,
+    artistStr: string | Resource,
+    labelRes: Resource,
+    lyricFile: string,
+    duration: number
+  ): Promise<void> {
     if (!this.avSessionImpl) {
       return
     }
-    const metadata: avSession.AVMetadata = {
-      assetId: '0',
-      title: title,
-      artist: artist,
-      duration: duration
+    try {
+      const title = typeof titleStr === 'string' ? titleStr : '未知歌曲'
+      const artist = typeof artistStr === 'string' ? artistStr : '未知歌手'
+      let mediaImage: PixelMap | undefined = undefined
+      let lyric: string | undefined = undefined
+
+      if (this.context) {
+        // 封面 PixelMap
+        try {
+          const fileData: Uint8Array = await this.context.resourceManager.getMediaContent(labelRes.id)
+          mediaImage = await image.createImageSource(fileData.buffer as ArrayBuffer).createPixelMap()
+        } catch (_) {
+          Logger.warn(`${TAG}: failed to get cover image`)
+        }
+        // 歌词 LRC
+        if (lyricFile && lyricFile.length > 0) {
+          try {
+            const lyricData: Uint8Array = await this.context.resourceManager.getRawFileContent(lyricFile)
+            const decoder = util.TextDecoder.create('utf-8', { ignoreBOM: true })
+            lyric = decoder.decodeToString(lyricData, { stream: false })
+          } catch (_) {
+            Logger.warn(`${TAG}: failed to get lyric`)
+          }
+        }
+      }
+
+      const metadata: avSession.AVMetadata = {
+        assetId: `${songId}`,
+        title: title,
+        artist: artist,
+        duration: duration,
+        mediaImage: mediaImage,
+        avQueueName: 'AudioPlayerQueue',
+        avQueueId: `${songId}`
+      }
+      if (lyric) {
+        metadata.lyric = lyric
+      }
+      this.avSessionImpl.setAVMetadata(metadata)
+      Logger.info(`${TAG}: setAVMetadata success, title=${title}, hasCover=${mediaImage !== undefined}, hasLyric=${lyric !== undefined}`)
+    } catch (e) {
+      Logger.error(`${TAG}: setAVMetadata error ${JSON.stringify(e)}`)
     }
-    this.avSessionImpl.setAVMetadata(metadata)
-      .then(() => Logger.info(`${TAG}: setAVMetadata success, title=${title}`))
-      .catch((err: BusinessError) =>
-        Logger.error(`${TAG}: setAVMetadata failed, code=${err.code}`))
   }
 
   public setPlayState(isPlay: boolean): void {
@@ -102,6 +147,8 @@ export class AVSessionController {
     this.avSessionImpl.off('playNext')
     this.avSessionImpl.off('playPrevious')
     this.avSessionImpl.off('seek')
+    this.avSessionImpl.off('setLoopMode')
+    this.avSessionImpl.off('toggleFavorite')
     this.avSessionImpl.destroy()
     this.avSessionImpl = undefined
   }
@@ -140,12 +187,41 @@ export class AVSessionController {
     this.avSessionImpl.on('playNext', () => this.onNextRequested?.())
     this.avSessionImpl.on('playPrevious', () => this.onPrevRequested?.())
     this.avSessionImpl.on('seek', (ms: number) => this.onSeekRequested?.(ms))
-    this.avSessionImpl.on('setLoopMode', (loopMode: avSession.LoopMode) => {
-      this.onSetLoopModeRequested?.(loopMode)
-    })
-    this.avSessionImpl.on('toggleFavorite', (assetId: string) => {
-      this.onToggleFavoriteRequested?.(assetId)
-    })
+    this.avSessionImpl.on('setLoopMode', this.onSetLoopMode)
+    this.avSessionImpl.on('toggleFavorite', this.onToggleFavorite)
+  }
+
+  private onSetLoopMode: (loopMode: avSession.LoopMode) => void = (loopMode) => {
+    let mappedMode: MusicPlayMode
+    switch (loopMode) {
+      case avSession.LoopMode.LOOP_MODE_SINGLE:
+        mappedMode = MusicPlayMode.ORDER
+        break
+      case avSession.LoopMode.LOOP_MODE_SEQUENCE:
+        mappedMode = MusicPlayMode.RANDOM
+        break
+      case avSession.LoopMode.LOOP_MODE_SHUFFLE:
+        mappedMode = MusicPlayMode.SINGLE_CYCLE
+        break
+      default:
+        mappedMode = MusicPlayMode.ORDER
+        break
+    }
+    AudioPlayerController.getInstance().setPlayMode(mappedMode)
+    const idx = PlayModeSwitchList.indexOf(mappedMode)
+    if (idx >= 0) {
+      AppStorage.setOrCreate('playModeIndex', idx)
+    }
+  }
+
+  private onToggleFavorite: (assetId: string) => void = (assetId: string) => {
+    const songId = parseInt(assetId)
+    if (isNaN(songId)) {
+      return
+    }
+    const nowFav = MusicDbApi.getInstance().toggleFavorite(songId)
+    this.updateFavoriteState(assetId, nowFav)
+    this.currentTabState.favoriteVersion++
   }
 
   // ==================== loopMode ====================

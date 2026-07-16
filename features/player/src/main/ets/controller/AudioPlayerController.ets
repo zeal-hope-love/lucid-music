@@ -3,9 +3,10 @@
  */
 import { media } from '@kit.MediaKit'
 import { audio } from '@kit.AudioKit'
+import { common } from '@kit.AbilityKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import {
-  AppStorageKeys, Logger, MusicAppState
+  AppStorageKeys, Logger, MusicAppState, MusicDbApi
 } from 'musicbasic'
 import { AppStorageV2 } from '@kit.ArkUI'
 import { MediaTools } from './MediaTools'
@@ -73,9 +74,16 @@ export class AudioPlayerController {
     if (this.currentState !== 'idle') {
       await this.avPlayer.reset()
     }
-    this.avPlayer.url = url
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      this.avPlayer.url = url
+    } else {
+      const ctx = AppStorage.get('context') as common.UIAbilityContext
+      const rawFd = await ctx.resourceManager.getRawFd(url)
+      this.avPlayer.fdSrc = { fd: rawFd.fd, offset: rawFd.offset, length: rawFd.length }
+      Logger.info(`${TAG}: loadAndPlay fdSrc set, fd=${rawFd.fd}, length=${rawFd.length}`)
+    }
     this.waitPlay = true
-    Logger.info(`${TAG}: loadAndPlay url set, state=${this.avPlayer.state}`)
+    Logger.info(`${TAG}: loadAndPlay done, state=${this.avPlayer.state}`)
   }
 
   // ==================== 播放控制 ====================
@@ -169,12 +177,13 @@ export class AudioPlayerController {
     this.playCurrent()
   }
 
-  private async playCurrent(): Promise<void> {
+  public async playCurrent(): Promise<void> {
     const songItem = this.appState.getCurrentSongItem()
     if (!songItem) {
       Logger.warn(`${TAG}: playCurrent, no current song`)
       return
     }
+    MusicDbApi.getInstance().addRecentPlay(songItem.id)
     try {
       const url: string = songItem.src
       if (url) {
@@ -265,6 +274,10 @@ export class AudioPlayerController {
           this.appState.progressMax = this.avPlayer!.duration
           this.appState.totalTime = MediaTools.msToCountdownTime(this.avPlayer!.duration)
           await this.initSessionMetadata()
+          if (this.waitPlay) {
+            await this.avPlayer!.play()
+            this.waitPlay = false
+          }
           break
         case 'playing':
           this.updateIsPlay(true)
@@ -302,6 +315,7 @@ export class AudioPlayerController {
       this.appState.currentTime = currentTimeStr
       AppStorage.setOrCreate('progress', time)
       AppStorage.setOrCreate('currentTime', currentTimeStr)
+      this.avSessionController.setProgressState(time)
     })
   }
 
@@ -356,11 +370,14 @@ export class AudioPlayerController {
   private async initSessionMetadata(): Promise<void> {
     try {
       await this.avSessionController.initAVSession()
+      this.avSessionController.setPlayModeToAVSession(this.playMode)
       const songItem = this.appState.getCurrentSongItem()
       if (songItem) {
         const title = typeof songItem.title === 'string' ? songItem.title : '未知歌曲'
         const artist = typeof songItem.singer === 'string' ? songItem.singer : '未知歌手'
-        this.avSessionController.updateMetadata(title, artist, this.appState.progressMax)
+        this.avSessionController.updateMetadata(
+          songItem.id, title, artist, songItem.label, songItem.lyric, this.appState.progressMax
+        )
       }
     } catch (e) {
       Logger.warn(`${TAG}: AVSession init skipped: ${JSON.stringify(e)}`)

@@ -73,6 +73,12 @@ export default struct shiLrcView {
   private lrcX: number = 0;
   private lrcY: number = 0;
   private curCanvasOffsetY: number = 0;
+  @State private manualOffset: number = 0;
+  @State private isManualScrolling: boolean = false;
+  private manualTimeoutId: number = -1;
+  private lastPanOffsetY: number = 0;
+  private lastPanDelta: number = 0;
+  private inertiaAnimator: AnimatorResult | null = null;
   private starAverageAngle: number = 0;
   private starOutCircleAngle: number = 0;
   private starInCircleAngle: number = 0;
@@ -475,6 +481,15 @@ export default struct shiLrcView {
     this.startAnimator(offset);
   }
 
+  private scheduleAutoResume(): void {
+    this.manualTimeoutId = setTimeout(() => {
+      this.isManualScrolling = false;
+      let line = this.findShowLine(this.lyricMilliSecondsTime);
+      this.mCurrentLine = line;
+      this.smoothScrollTo(line);
+    }, 3000);
+  }
+
   onLyricUpdated() {
     this.mCurrentLine = NONE_LINE;
     this.onTimeUpdated();
@@ -483,6 +498,9 @@ export default struct shiLrcView {
   onTimeUpdated() {
     if (!this.hasLrc()) {
       this.drawContent(0);
+      return;
+    }
+    if (this.isManualScrolling) {
       return;
     }
     let line = this.findShowLine(this.lyricMilliSecondsTime);
@@ -524,5 +542,54 @@ export default struct shiLrcView {
           this.drawContent(-offset, true);
         }
       })
+      .gesture(
+        PanGesture({ direction: PanDirection.Vertical, distance: 5 })
+          .onActionStart(() => {
+            this.isManualScrolling = true;
+            this.animator.finish();
+            if (this.inertiaAnimator) {
+              this.inertiaAnimator.finish();
+            }
+            clearTimeout(this.manualTimeoutId);
+            this.lastPanOffsetY = 0;
+            this.lastPanDelta = 0;
+          })
+          .onActionUpdate((event: GestureEvent) => {
+            this.lastPanDelta = event.offsetY - this.lastPanOffsetY;
+            this.lastPanOffsetY = event.offsetY;
+            this.curCanvasOffsetY += this.lastPanDelta;
+            this.drawContent(this.curCanvasOffsetY, true);
+          })
+          .onActionEnd((event: GestureEvent) => {
+            let velocity = event.velocityY * 1.2;
+            if (Math.abs(velocity) < 0.5) {
+              this.scheduleAutoResume();
+              return;
+            }
+            this.inertiaAnimator = this.getUIContext().createAnimator({
+              duration: 700,
+              easing: 'ease-out',
+              delay: 0,
+              fill: 'forwards',
+              direction: 'normal',
+              iterations: 1,
+              begin: 0,
+              end: 1
+            });
+            let startOffset = this.curCanvasOffsetY;
+            let totalDelta = (velocity / 1000) * 400;
+            let that = this;
+            this.inertiaAnimator.onFrame = (value: number) => {
+              let t = value;
+              let eased = 1 - (1 - t) * (1 - t);
+              that.curCanvasOffsetY = startOffset + totalDelta * eased;
+              that.drawContent(that.curCanvasOffsetY, true);
+            };
+            this.inertiaAnimator.onFinish = () => {
+              that.scheduleAutoResume();
+            };
+            this.inertiaAnimator.play();
+          })
+      )
   }
 }

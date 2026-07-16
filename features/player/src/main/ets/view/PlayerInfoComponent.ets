@@ -18,6 +18,7 @@ import { effectKit } from '@kit.ArkGraphics2D';
 import { image } from '@kit.ImageKit';
 import { common } from '@kit.AbilityKit';
 import { display } from '@kit.ArkUI';
+import { curves } from '@kit.ArkUI';
 import { LyricsComponent } from './LyricsComponent';
 import { MusicInfoComponent } from './MusicInfoComponent';
 import { ControlAreaComponent } from './ControlAreaComponent';
@@ -43,9 +44,12 @@ export struct PlayerInfoComponent {
   @State isShowControlLg: boolean = false;
   @State isTablet: boolean = true;
   @State isTabletFalse: boolean = false;
+  @State showLyrics: boolean = false;
   @StorageLink('pageShowTime') pageShowTime: number = 0;
   @State intervalID: number = 0;
   @Link isShowPlay: boolean;
+  /** 入场/退场播放过渡：true 时 MusicInfoComponent 封面跟随 MiniPlayerBar 做一镜到底 */
+  @StorageLink('playbackEntering') playbackEntering: boolean = false;
   @StorageLink('isFoldFull') isFoldFull: boolean = false;
   private context: common.UIAbilityContext | undefined = AppStorage.get('context');
   private callback: Callback<display.FoldDisplayMode> = (data: display.FoldDisplayMode) => {
@@ -81,6 +85,14 @@ export struct PlayerInfoComponent {
     }
   }
 
+  private startControlTimer(): void {
+    this.isShowControl = true;
+  }
+
+  private resetControlTimer(): void {
+    this.isShowControl = true;
+  }
+
   build() {
     Stack() {
       Image(this.imageLabel)
@@ -103,7 +115,7 @@ export struct PlayerInfoComponent {
               .margin({ left: $r('app.float.margin_small'), right: $r('app.float.margin_small') })
 
               GridCol({ span: { md: BreakpointConstants.SPAN_SM } }) {
-                LyricsComponent({ isShowControl: this.isShowControlLg, isTablet: this.isTabletFalse })
+                LyricsComponent({ isTablet: this.isTabletFalse })
               }
               .padding({ left: $r('app.float.twenty_four') })
             }
@@ -138,7 +150,7 @@ export struct PlayerInfoComponent {
                 span: { md: BreakpointConstants.SPAN_SM, lg: BreakpointConstants.SPAN_MD },
                 offset: { lg: BreakpointConstants.OFFSET_MD }
               }) {
-                LyricsComponent({ isShowControl: this.isShowControlLg, isTablet: this.isTablet })
+                LyricsComponent({ isTablet: this.isTablet })
               }
             }
             .layoutWeight(1)
@@ -148,50 +160,79 @@ export struct PlayerInfoComponent {
             })
           }
         } else {
-          Stack({ alignContent: Alignment.TopStart }) {
-            Swiper() {
-              MusicInfoComponent()
-                .margin({
-                  top: $r('app.float.music_component_top'),
-                  bottom: $r('app.float.music_component_bottom')
-                })
-                .padding({
-                  left: $r('app.float.common_padding'),
-                  right: $r('app.float.common_padding')
-                })
-              LyricsComponent({ isShowControl: this.isShowControl, isTablet: this.isTabletFalse })
-                .margin({ top: $r('app.float.margin_lyric') })
-                .padding({
-                  left: $r('app.float.common_padding'),
-                  right: $r('app.float.common_padding')
-                })
+          Column() {
+            // === 顶部页面指示器 ===
+            Row() {
+              Row()
+                .width(this.showLyrics ? 6 : 12)
+                .height(6)
+                .borderRadius(3)
+                .backgroundColor(this.showLyrics ? '#66FFFFFF' : '#FFFFFFFF')
+                .animation({ duration: 350, curve: curves.springMotion() })
+              Row()
+                .width(this.showLyrics ? 12 : 6)
+                .height(6)
+                .borderRadius(3)
+                .backgroundColor(this.showLyrics ? '#FFFFFFFF' : '#66FFFFFF')
+                .animation({ duration: 350, curve: curves.springMotion() })
+                .margin({ left: 8 })
             }
-            .height(StyleConstants.FULL_HEIGHT)
-            .indicator(
-              new DotIndicator()
-                .top($r('app.float.options_padding'))
-                .selectedColor($r('app.color.select_swiper'))
-                .color($r('app.color.slider_track'))
-            )
-            .clip(false)
-            .loop(false)
-            .onChange((index: number) => {
-              if (index === 1) {
-                this.isShowControl = true;
-                this.intervalID = setInterval(() => {
-                  this.pageShowTime += 1;
-                  if (this.pageShowTime > 5) {
-                    this.isShowControl = false;
-                    clearInterval(this.intervalID);
-                  }
-                }, 1000);
-              } else {
-                this.pageShowTime = 0;
-                clearInterval(this.intervalID);
+            .width(StyleConstants.FULL_WIDTH)
+            .justifyContent(FlexAlign.Center)
+            .margin({ top: 16 })
+
+            // === 内容区（if/if + transition + geometryTransition） ===
+            Stack() {
+              if (!this.showLyrics) {
+                MusicInfoComponent({ follow: this.showLyrics || this.playbackEntering })
+                  .transition(TransitionEffect.IDENTITY)
+                  .margin({ bottom: $r('app.float.music_component_bottom') })
               }
-            })
+
+              if (this.showLyrics) {
+                LyricsComponent({ isTablet: this.isTabletFalse, follow: !this.showLyrics || this.playbackEntering })
+                  .transition(
+                    TransitionEffect.asymmetric(
+                      TransitionEffect.translate({ x: 400 }).animation({ curve: curves.springMotion() }),
+                      TransitionEffect.translate({ x: 400 }).animation({ duration: 400, curve: Curve.EaseInOut })
+                    )
+                  )
+                  .margin({ top: $r('app.float.margin_lyric') })
+              }
+            }
+            .layoutWeight(1)
+            .gesture(
+              PanGesture({ direction: PanDirection.Horizontal, distance: 80 })
+                .onActionEnd((event: GestureEvent) => {
+                  if (event.offsetX < -50 && !this.showLyrics) {
+                    this.getUIContext()?.animateTo({ curve: curves.springMotion() }, () => {
+                      this.showLyrics = true;
+                    })
+                    this.startControlTimer();
+                  } else if (event.offsetX > 50 && this.showLyrics) {
+                    this.getUIContext()?.animateTo({ curve: curves.springMotion() }, () => {
+                      this.showLyrics = false;
+                    })
+                    this.resetControlTimer();
+                  }
+                })
+            )
+
+            // === 底部控制区（固定不动） ===
+            ControlAreaComponent()
+              .opacity(this.isShowControl ? 1 : 0)
+              .animation({ duration: 300, curve: Curve.EaseInOut })
+              .margin({
+                top: 8,
+                bottom: $r('app.float.music_component_bottom')
+              })
           }
           .height(StyleConstants.FULL_HEIGHT)
+          .width(StyleConstants.FULL_WIDTH)
+          .padding({
+            left: $r('app.float.common_padding'),
+            right: $r('app.float.common_padding')
+          })
         }
       }
       .padding({ bottom: this.bottomHeight, top: this.topHeight })

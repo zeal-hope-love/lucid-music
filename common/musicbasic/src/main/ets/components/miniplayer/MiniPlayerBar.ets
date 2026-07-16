@@ -152,7 +152,7 @@ export struct MiniPlayerBar {
           .width('100%').height('100%')
           .borderRadius('50%')
           .objectFit(ImageFit.Cover)
-          .geometryTransition('coverImage', { follow: true })
+          .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: false })
       }
       .padding(1).width(40).aspectRatio(1)
       .justifyContent(FlexAlign.Center)

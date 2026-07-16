@@ -18,7 +18,7 @@ import { StyleConstants } from '../constants/StyleConstants';
 import { BreakpointType } from '../utils/BreakpointSystem';
 import { AVSessionController } from '../controller/AVSessionController';
 import { SongItem } from '../viewmodel/SongData';
-import { ControlAreaComponent } from './ControlAreaComponent';
+import { MusicDbApi } from 'musicbasic';
 
 @Extend(Image)
 function controlImageBuilder() {
@@ -31,12 +31,24 @@ function controlImageBuilder() {
 @Component
 export struct MusicInfoComponent {
   @State currentTabIndex: number = 0;
+  @Prop follow: boolean = false;
   @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointConstants.BREAKPOINT_SM;
   @StorageLink('isFoldFull') isFoldFull: boolean = false;
   @StorageLink('songList') songList: SongItem[] = [];
-  @StorageProp('selectIndex') selectIndex: number = 0;
+  @StorageProp('selectIndex') @Watch('syncFavoriteState') selectIndex: number = 0;
   @State isShowControl: boolean = false;
   @StorageLink('isFavorite') isFavorite: boolean = false;
+
+  aboutToAppear(): void {
+    this.syncFavoriteState()
+  }
+
+  syncFavoriteState(): void {
+    if (this.songList.length > 0 && this.selectIndex < this.songList.length) {
+      const songId = this.songList[this.selectIndex].id
+      this.isFavorite = MusicDbApi.getInstance().isFavorite(songId)
+    }
+  }
 
   build() {
     GridRow({
@@ -59,11 +71,8 @@ export struct MusicInfoComponent {
         Column() {
           this.CoverInfo()
           this.MusicInfo()
-          Blank()
-          ControlAreaComponent()
         }
-        .height(StyleConstants.FULL_HEIGHT)
-        .width(StyleConstants.FULL_HEIGHT)
+        .width(StyleConstants.FULL_WIDTH)
         .clip(false)
       }
     }
@@ -83,6 +92,7 @@ export struct MusicInfoComponent {
           offsetY: 8
         })
         .margin($r('app.float.lyric_margin_right_sm'))
+        .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
     }
   }
 
@@ -97,6 +107,8 @@ export struct MusicInfoComponent {
           .opacity(0.86)
           .fontWeight(FontWeight.Bold)
           .fontFamily(PlayerConstants.FONT_FAMILY_BOLD)
+          .constraintSize({ minWidth: 200 })
+          .geometryTransition('PLAYBACK_TITLE_TRANSITION', { follow: this.follow })
         Text(this.songList[this.selectIndex].singer)
           .textAlign(TextAlign.Start)
           .fontSize(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_MD && !this.isFoldFull ?
@@ -105,6 +117,8 @@ export struct MusicInfoComponent {
           .fontFamily(PlayerConstants.FONT_FAMILY_BLACK)
           .margin({ top: $r('app.float.music_text_margin_top') })
           .fontWeight(FontWeight.Regular)
+          .constraintSize({ minWidth: 200 })
+          .geometryTransition('PLAYBACK_SINGER_TRANSITION', { follow: this.follow })
       }
       .alignItems(HorizontalAlign.Start)
 
@@ -113,9 +127,12 @@ export struct MusicInfoComponent {
         .renderingStrategy(SymbolRenderingStrategy.SINGLE)
         .fontColor([this.isFavorite ? Color.Red : Color.White])
         .opacity(0.86)
+        .geometryTransition('PLAYBACK_FAVORITE_TRANSITION', { follow: this.follow })
         .onClick(() => {
-          this.isFavorite = !this.isFavorite;
-          AVSessionController.getInstance().updateFavoriteState(this.selectIndex.toString(), this.isFavorite)
+          const songId = this.songList[this.selectIndex].id
+          const nowFav = MusicDbApi.getInstance().toggleFavorite(songId)
+          this.isFavorite = nowFav
+          AVSessionController.getInstance().updateFavoriteState(songId.toString(), nowFav)
         })
     }
     .width('100%')

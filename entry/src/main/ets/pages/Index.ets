@@ -1,19 +1,20 @@
 /*
  * Lucid Music - 路由入口
  * 架构：管理 tab 状态（CurrentTabState） + 路由（Search/Playback push） + 初始化。
- * 底部栏 UI 由各 Tab 页面自行管理。
+ * 底部栏（MiniPlayerBar + LucidTabBar）由 Index 统一管理，按页面类型控制显隐。
  */
-import { AppStorageV2, curves } from '@kit.ArkUI'
+import { AppStorageV2, curves, display } from '@kit.ArkUI'
 import {
-  AppStorageKeys, CurrentTabState, MusicAppState, MusicDbApi,
+  AppStorageKeys, BottomBarVisibility, CurrentTabState, MusicAppState, MusicDbApi,
   PlaybackIntentState, RouterUrlConstants
 } from 'musicbasic'
-import { dispatchShellPlaybackIntent, JsVmBridge } from 'player'
-import { AudioPlayerController } from 'player'
-import { AVSessionController } from 'player'
+import { LucidTabBar, MiniPlayerBar } from 'musicbasic'
+import {
+  dispatchShellPlaybackIntent, JsVmBridge, AudioPlayerController, AVSessionController
+} from 'player'
 import { HomePage } from 'home'
 import { MusicHallPage } from 'musichall'
-import { MinePage } from 'mine'
+import { MinePage, MusicListPage, MusicListParam, SettingsPage } from 'mine'
 import { SearchPage } from 'search'
 import { PlaybackPage } from 'player'
 
@@ -23,18 +24,23 @@ struct Index {
   @Provider() navPathStack: NavPathStack = new NavPathStack()
   @Provider() searchBackVersion: number = 0
   @Provider() isSearchResultMode: boolean = false
+  @Provider() barVisibility: BottomBarVisibility = new BottomBarVisibility()
   @Local appState: MusicAppState =
     AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!
   @Local intentState: PlaybackIntentState =
     AppStorageV2.connect(PlaybackIntentState, AppStorageKeys.PLAYBACK_INTENT_STATE, () => new PlaybackIntentState())!
-  /** Tab 状态，各页面 TabBar onChange 写入后自动感知 */
+  /** Tab 状态，LucidTabBar onChange 写入后自动感知 */
   @Local currentTabState: CurrentTabState =
     AppStorageV2.connect(CurrentTabState, AppStorageKeys.CURRENT_TAB_STATE, () => new CurrentTabState())!
 
-  /** Tab 切换时清除 Search/Playback 残留路由 */
-  @Monitor('currentTabState.index')
-  onTabChanged(): void {
-    this.navPathStack.clear()
+  @Computed
+  get screenWidth(): number {
+    try {
+      const d = display.getDefaultDisplaySync()
+      return Math.round(d.width * 160 / d.densityDPI)
+    } catch (_) {
+      return 360
+    }
   }
 
   aboutToAppear() {
@@ -53,18 +59,6 @@ struct Index {
     avs.onNextRequested = () => player.playNext()
     avs.onPrevRequested = () => player.playPrevious()
     avs.onSeekRequested = (ms: number) => player.seek(ms)
-    avs.onSetLoopModeRequested = (loopMode) => {
-      if (loopMode === 0) { // LOOP_MODE_SEQUENCE
-        player.setPlayMode(1) // MusicPlayMode.ORDER
-      } else if (loopMode === 1) { // LOOP_MODE_SINGLE
-        player.setPlayMode(0) // MusicPlayMode.SINGLE_CYCLE
-      } else if (loopMode === 2) { // LOOP_MODE_SHUFFLE
-        player.setPlayMode(2) // MusicPlayMode.RANDOM
-      }
-    }
-    avs.onToggleFavoriteRequested = (assetId: string) => {
-      avs.updateFavoriteState(assetId, true)
-    }
   }
 
   @Monitor('intentState.requestVersion')
@@ -78,7 +72,24 @@ struct Index {
     if (this.navPathStack.getIndexByName(RouterUrlConstants.PLAYBACK).length > 0) {
       return
     }
-    this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYBACK, undefined))
+    AppStorage.setOrCreate('playbackEntering', true)
+    this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYBACK, undefined), { animated: false })
+  }
+
+  /** 根据当前导航栈状态恢复底部栏显隐 */
+  private restoreBarVisibility(): void {
+    if (this.navPathStack.getAllPathName().length === 0) {
+      // 回到 Tab 页
+      this.barVisibility.miniPlayerVisible = true
+      this.barVisibility.tabBarVisible = true
+    } else {
+      // 栈中仍有页面（如从 Playback 回退到 Search）
+      this.barVisibility.miniPlayerVisible = true
+      this.barVisibility.tabBarVisible = false
+    }
+    // 通知 MinePage 和 MusicListPage 刷新数据
+    this.currentTabState.refreshCounter++
+    this.currentTabState.favoriteVersion++
   }
 
   @Builder
@@ -89,6 +100,13 @@ struct Index {
       }
       .hideTitleBar(true)
       .transition(TransitionEffect.OPACITY)
+      .onAppear(() => {
+        this.barVisibility.miniPlayerVisible = true
+        this.barVisibility.tabBarVisible = false
+      })
+      .onDisAppear(() => {
+        this.restoreBarVisibility()
+      })
       .onBackPressed(() => {
         if (this.isSearchResultMode) {
           this.searchBackVersion++
@@ -106,29 +124,131 @@ struct Index {
         PlaybackPage()
       }
       .hideTitleBar(true)
+      .transition(TransitionEffect.IDENTITY.animation({ duration: 0 }))
+      .onAppear(() => {
+        this.barVisibility.tabBarVisible = false
+        this.barVisibility.miniPlayerVisible = false
+      })
+      .onDisAppear(() => {
+        AppStorage.setOrCreate('playbackEntering', false)
+        this.restoreBarVisibility()
+      })
+      .onBackPressed(() => {
+        // 退场一镜到底：先让 MiniPlayerBar 可见，作为目标位置
+        AppStorage.setOrCreate('playbackEntering', true)
+        this.barVisibility.miniPlayerVisible = true
+        this.navPathStack.pop(false)
+        return true
+      })
+    } else if (name === 'Settings') {
+      NavDestination() {
+        SettingsPage()
+      }
+      .hideTitleBar(true)
+      .transition(TransitionEffect.OPACITY)
+      .backgroundColor(Color.Transparent)
+      .onAppear(() => {
+        this.barVisibility.miniPlayerVisible = false
+        this.barVisibility.tabBarVisible = false
+      })
+      .onDisAppear(() => {
+        this.restoreBarVisibility()
+      })
+      .onBackPressed(() => {
+        this.navPathStack.pop()
+        return true
+      })
+    } else if (name === 'MusicList') {
+      NavDestination() {
+        MusicListPage({ param: _param as MusicListParam })
+      }
+      .hideTitleBar(true)
+      .transition(TransitionEffect.OPACITY)
+      .backgroundColor(Color.Transparent)
+      .onAppear(() => {
+        this.barVisibility.miniPlayerVisible = true
+        this.barVisibility.tabBarVisible = false
+      })
+      .onDisAppear(() => {
+        this.restoreBarVisibility()
+      })
+      .onBackPressed(() => {
+        this.navPathStack.pop()
+        return true
+      })
     }
   }
 
   @Builder
   tabContent() {
-    if (this.currentTabState.index === 0) {
+    Swiper() {
       HomePage()
-    } else if (this.currentTabState.index === 1) {
       MusicHallPage()
-    } else {
       MinePage()
     }
+    .index(this.currentTabState.index)
+    .onChange((index: number) => {
+      this.currentTabState.index = index
+      this.navPathStack.clear()
+    })
+    .indicator(false)
+    .loop(false)
+    .cachedCount(1)
+    .itemSpace(0)
+    .width('100%')
+    .height('100%')
   }
 
   build() {
-    Navigation(this.navPathStack) {
-      this.tabContent()
+    Stack({ alignContent: Alignment.Bottom }) {
+      Navigation(this.navPathStack) {
+        this.tabContent()
+      }
+      .navDestination(this.navDestinationBuilder)
+      .hideTitleBar(true)
+      .mode(NavigationMode.Stack)
+      .width('100%')
+      .height('100%')
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+
+      // === 底部栏（固定在屏幕底部，不受 Swiper 滑动 / Navigation 导航影响） ===
+      Column() {
+        if (this.barVisibility.miniPlayerVisible) {
+          MiniPlayerBar({
+            barWidth: this.screenWidth - 40,
+            bottomOffset: 10,
+            onPlayPause: (): void => {
+              AudioPlayerController.getInstance().togglePlay()
+            },
+            onNext: (): void => {
+              AudioPlayerController.getInstance().playNext()
+            },
+            onTap: (): void => {
+              if (this.navPathStack.getIndexByName(RouterUrlConstants.PLAYBACK).length > 0) {
+                return
+              }
+              AppStorage.setOrCreate('playbackEntering', true)
+              this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYBACK, undefined), { animated: false })
+            }
+          })
+          .margin({ bottom: 30 })
+        }
+
+        if (this.barVisibility.tabBarVisible) {
+          LucidTabBar({
+            currentIndex: this.currentTabState.index,
+            barWidth: this.screenWidth - 40,
+            bottomOffset: 30,
+            onChange: (index: number): void => {
+              this.currentTabState.index = index
+            }
+          })
+        }
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Center)
     }
-    .navDestination(this.navDestinationBuilder)
-    .hideTitleBar(true)
-    .mode(NavigationMode.Stack)
     .width('100%')
     .height('100%')
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

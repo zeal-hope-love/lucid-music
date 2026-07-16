@@ -31,6 +31,10 @@ export class MusicMemoryStore {
   public playlists: PlaylistRow[] = [];
   /** Home feed rows (hero, cards, tabs), unsorted until read via API. */
   public recommendFeed: RecommendFeedRow[] = [];
+  /** Recently played song ids, most recent first, no duplicates. */
+  public recentPlayIds: number[] = [];
+  /** Favorited song ids, insertion order. */
+  public favoriteSongIds: number[] = [];
 
   /**
    * @returns Shared {@link MusicMemoryStore} instance.
@@ -105,21 +109,14 @@ export class MusicMemoryStore {
     'boisterous.mp3'
   ];
 
-  /** Constructs the full demo song catalog. */
+  /** Constructs the demo song catalog: 2 songs for test switching. */
   private buildSongs(): SongRow[] {
-    const list: SongRow[] = [
+    return [
       this.buildSongRow(1, 'Dream It Possible', 'Delacey', $r('app.media.ic_vip'), this.coverLabelForSongId(1),
-        'Dream_It_Possible-Delacey.mp3', 0, 'lrcfiles/DreamItPossible.lrc')
+        'Dream_It_Possible-Delacey.mp3', 0, 'lrcfiles/DreamItPossible.lrc'),
+      this.buildSongRow(2, 'Journey of Light', 'Dane Amar', $r('app.media.ic_sq'), this.coverLabelForSongId(2),
+        'world.mp3', 1, '')
     ];
-    const privateTitle: Resource = $r('app.string.private_song_title');
-    for (let id = 2; id <= 34; id++) {
-      const singer: Resource =
-        MusicMemoryStore.privateSongSingerResources[(id - 2) % MusicMemoryStore.privateSongSingerResources.length];
-      const mark: Resource = id % 2 === 0 ? $r('app.media.ic_sq') : $r('app.media.ic_vip');
-      const src: string = MusicMemoryStore.demoPrivateSrcCycle[(id - 2) % MusicMemoryStore.demoPrivateSrcCycle.length];
-      list.push(this.buildSongRow(id, privateTitle, singer, mark, this.coverLabelForSongId(id), src, id - 1, ''));
-    }
-    return list;
   }
 
   /**
@@ -155,16 +152,43 @@ export class MusicMemoryStore {
     return row;
   }
 
-  /** Seeds a default playlist containing demo song ids 1–34. */
-  private buildPlaylists(): PlaylistRow[] {
-    const ids: number[] = [];
-    for (let songId = 1; songId <= 34; songId++) {
-      ids.push(songId);
+  // ==================== 最近播放 ====================
+
+  /** Records a play: removes existing entry then prepends to front. */
+  public addRecentPlay(id: number): void {
+    const idx = this.recentPlayIds.indexOf(id);
+    if (idx !== -1) {
+      this.recentPlayIds.splice(idx, 1);
     }
+    this.recentPlayIds.unshift(id);
+  }
+
+  // ==================== 收藏 ====================
+
+  /** Toggles favorite status. Returns the new state (true = favorited). */
+  public toggleFavorite(id: number): boolean {
+    const idx = this.favoriteSongIds.indexOf(id);
+    if (idx !== -1) {
+      this.favoriteSongIds.splice(idx, 1);
+      return false;
+    }
+    this.favoriteSongIds.push(id);
+    return true;
+  }
+
+  /** Checks whether a song id is favorited. */
+  public isFavorite(id: number): boolean {
+    return this.favoriteSongIds.indexOf(id) !== -1;
+  }
+
+  // ==================== 种子数据 ====================
+
+  /** Seeds a default playlist containing demo song ids 1–2. */
+  private buildPlaylists(): PlaylistRow[] {
     const playlist = new PlaylistRow();
     playlist.playlistId = 1;
     playlist.title = $r('app.string.playlist_detail_title');
-    playlist.songIds = ids;
+    playlist.songIds = [1, 2];
     return [playlist];
   }
 

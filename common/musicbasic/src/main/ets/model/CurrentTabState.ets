@@ -21,4 +21,8 @@
 export class CurrentTabState {
   /** Current selected tab index: 0=Home, 1=MusicHall, 2=Mine */
   @Trace public index: number = 0
+  /** Incremented on navigation pop to trigger MinePage/MusicListPage refresh */
+  @Trace public refreshCounter: number = 0
+  /** Incremented on favorite toggle to trigger MusicListPage real-time refresh */
+  @Trace public favoriteVersion: number = 0
 }
