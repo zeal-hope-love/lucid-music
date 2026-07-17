@@ -11,8 +11,7 @@ import { StyleConstants } from '../constants/StyleConstants';
 import { BreakpointType } from '../utils/BreakpointSystem';
 import Logger from '../utils/LoggerAdapter';
 import { ResourceConversion } from '../utils/ResourceConversion';
-import { SongItem } from '../viewmodel/SongData';
-import { SongDataSource } from '../viewmodel/SongDataSource';
+import { SongItem, SongDataSource } from 'musicbasic';
 import { AudioPlayerController } from '../controller/AudioPlayerController';
 import { common } from '@kit.AbilityKit';
 import { PreferencesUtil } from '../utils/PreferencesUtil';
@@ -132,23 +131,27 @@ export struct ControlAreaComponent {
             .fontFamily(PlayerConstants.FONT_FAMILY_BLACK).lineHeight('14vp')
         }
         .width(StyleConstants.FULL_WIDTH).justifyContent(FlexAlign.SpaceBetween)
-
-        // === 播放状态文字（紧贴时间行） ===
-        if (this.playbackStatus !== 'idle' && this.playbackStatus !== 'ready') {
-          Text(this.playbackStatusMessage || this.playbackStatus)
-            .fontSize(12)
-            .fontColor(Color.White)
-            .opacity(0.7)
-            .textAlign(TextAlign.Center)
-            .width('100%')
-            .margin({ top: 0 })
-        }
       }
       .margin({
         top: $r('app.float.slider_margin_top'),
         bottom: this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ?
           $r('app.float.slider_margin_bottom_lg') : $r('app.float.slider_margin_bottom')
       })
+
+      // === 播放状态文字（固定高度 + visibility 控制显隐，避免布局抖动） ===
+      Row() {
+        Text(this.playbackStatusMessage || this.playbackStatus)
+          .fontSize(12)
+          .fontColor(Color.White)
+          .opacity(0.7)
+      }
+      .width(StyleConstants.FULL_WIDTH)
+      .justifyContent(FlexAlign.Center)
+      .height(16)
+      .margin({ top: 0 })
+      .offset({ y: -28 })
+      .visibility(this.playbackStatus !== 'idle' && this.playbackStatus !== 'ready' ?
+        Visibility.Visible : Visibility.Hidden)
 
       // === 播放控制按钮 ===
       Row() {
@@ -346,8 +349,7 @@ struct MusicListContainer {
         .alignItems(HorizontalAlign.Start)
       }
       .onClick(() => {
-        AppStorage.setOrCreate('selectIndex', this.index!)
-        AppStorage.setOrCreate('pendingPlayIndex', this.index!)
+        AudioPlayerController.getInstance().switchToIndex(this.index!)
       })
       .height($r('app.float.list_item_height')).width(StyleConstants.FULL_WIDTH)
     }

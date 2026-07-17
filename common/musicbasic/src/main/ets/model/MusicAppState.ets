@@ -55,6 +55,14 @@ export class  MusicAppState {
   @Trace public playbackStatus: string = 'idle';
   /** 播放状态可读文本（如 "正在请求播放地址..."） */
   @Trace public playbackStatusMessage: string = '';
+  /** 播放模式: 0=单曲循环, 1=顺序, 2=随机 (aligns with MusicPlayMode enum). */
+  @Trace public playMode: number = 1;
+  /** 当前歌曲是否已收藏. */
+  @Trace public isFavorite: boolean = false;
+  /** 是否静音模式. */
+  @Trace public isSilentMode: boolean = false;
+  /** 当前音量 0-100. */
+  @Trace public currentVolume: number = 100;
 
   /**
    * Resolves a {@link SongItem} for the given queue index without keeping a full table in memory.

@@ -14,6 +14,7 @@
  */
 
 
+import { MusichallPlaylistItem, TagFilterGroup, TagFilterItem } from '../data/MusichallPlaylistItem';
 import { PlaylistRow } from '../data/PlaylistRow';
 import { RecommendFeedKind, RecommendFeedRow } from '../data/RecommendFeedRow';
 import { SongRow } from '../data/SongRow';
@@ -35,6 +36,12 @@ export class MusicMemoryStore {
   public recentPlayIds: number[] = [];
   /** Favorited song ids, insertion order. */
   public favoriteSongIds: number[] = [];
+  /** Collected playlist ids (歌单收藏, for playlistType === 1), insertion order. */
+  public collectedPlaylistIds: number[] = [];
+  /** MusicHall 歌单展示列表（封面、播放量等 UI 数据）。 */
+  public musichallPlaylists: MusichallPlaylistItem[] = [];
+  /** MusicHall 分类标签树。 */
+  public musichallTagGroups: TagFilterGroup[] = [];
 
   /**
    * @returns Shared {@link MusicMemoryStore} instance.
@@ -56,6 +63,8 @@ export class MusicMemoryStore {
     this.songs = this.buildSongs();
     this.playlists = this.buildPlaylists();
     this.recommendFeed = this.buildRecommendFeed();
+    this.musichallPlaylists = this.buildMusichallPlaylists();
+    this.musichallTagGroups = this.buildMusichallTagGroups();
   }
 
   /** Rotating cover art resources for demo tracks (excluding id 1 special case). */
@@ -181,15 +190,61 @@ export class MusicMemoryStore {
     return this.favoriteSongIds.indexOf(id) !== -1;
   }
 
+  // ==================== 歌单收藏 ====================
+
+  /** Toggles playlist collect status. Returns the new state (true = collected). */
+  public toggleCollectPlaylist(id: number): boolean {
+    const idx = this.collectedPlaylistIds.indexOf(id);
+    if (idx !== -1) {
+      this.collectedPlaylistIds.splice(idx, 1);
+      return false;
+    }
+    this.collectedPlaylistIds.push(id);
+    return true;
+  }
+
+  /** Checks whether a playlist id is collected. */
+  public isCollectedPlaylist(id: number): boolean {
+    return this.collectedPlaylistIds.indexOf(id) !== -1;
+  }
+
   // ==================== 种子数据 ====================
 
-  /** Seeds a default playlist containing demo song ids 1–2. */
+  /** Seeds own + collected demo playlists. */
   private buildPlaylists(): PlaylistRow[] {
-    const playlist = new PlaylistRow();
-    playlist.playlistId = 1;
-    playlist.title = $r('app.string.playlist_detail_title');
-    playlist.songIds = [1, 2];
-    return [playlist];
+    const list: PlaylistRow[] = [];
+
+    const makeOwn = (id: number, title: Resource, songIds: number[]): void => {
+      const pl = new PlaylistRow();
+      pl.playlistId = id;
+      pl.title = title;
+      pl.songIds = songIds;
+      pl.playlistType = 0;
+      list.push(pl);
+    };
+
+    const makeCollected = (id: number, title: Resource, songIds: number[]): void => {
+      const pl = new PlaylistRow();
+      pl.playlistId = id;
+      pl.title = title;
+      pl.songIds = songIds;
+      pl.playlistType = 1;
+      list.push(pl);
+    };
+
+    // 自建歌单
+    makeOwn(1, $r('app.string.playlist_detail_title'), [1, 2]);
+    makeOwn(2, $r('app.string.playlist_title_my_fav'), [1]);
+    makeOwn(3, $r('app.string.playlist_title_chill'), [2]);
+
+    // 收藏歌单
+    makeCollected(4, $r('app.string.playlist_title_trending'), [1, 2]);
+    makeCollected(5, $r('app.string.playlist_title_discover'), [2]);
+
+    // 收藏歌单 ID 加入收藏列表
+    this.collectedPlaylistIds = [4, 5];
+
+    return list;
   }
 
   /** Builds hero banners, recommend cards, and category tab rows for the home feed. */
@@ -289,5 +344,87 @@ export class MusicMemoryStore {
       $r('app.media.ic_home_chip_categories_unsel'));
 
     return rows;
+  }
+
+  // ==================== MusicHall 种子数据 ====================
+
+  /** Cover art pool for musichall playlist cards. */
+  private static readonly musichallCoverPool: Resource[] = [
+    $r('app.media.ic_avatar1'),
+    $r('app.media.ic_avatar2'),
+    $r('app.media.ic_avatar4'),
+    $r('app.media.ic_avatar5'),
+    $r('app.media.ic_avatar6'),
+    $r('app.media.ic_avatar8'),
+    $r('app.media.ic_avatar9'),
+    $r('app.media.ic_avatar10'),
+    $r('app.media.ic_avatar11'),
+    $r('app.media.ic_avatar12')
+  ];
+
+  /** Seeds 8 demo playlist display items for MusicHallPage. */
+  private buildMusichallPlaylists(): MusichallPlaylistItem[] {
+    const make = (id: number, title: string, coverIdx: number, playCount: string, ...tagIds: string[]): MusichallPlaylistItem => {
+      const item = new MusichallPlaylistItem();
+      item.playlistId = id;
+      item.title = title;
+      item.coverImage = MusicMemoryStore.musichallCoverPool[coverIdx % 10];
+      item.playCount = playCount;
+      item.tags = tagIds;
+      return item;
+    };
+
+    return [
+      make(1, '华语经典怀旧精选', 0, '128.5万', 'hot', 'style_chinese'),
+      make(2, '欧美热门单曲榜', 1, '96.3万', 'hot', 'style_western'),
+      make(3, '轻音乐·午后咖啡馆', 2, '53.8万', 'style_light', 'mood_relax'),
+      make(4, '电子音乐·夜店狂潮', 3, '87.2万', 'style_electronic', 'mood_hot'),
+      make(5, '影视原声·经典回响', 4, '62.1万', 'style_soundtrack', 'style_chinese'),
+      make(6, 'K-POP 韩流热单', 5, '115.7万', 'hot', 'style_kpop'),
+      make(7, '爵士名曲·午夜萨克斯', 6, '28.4万', 'style_jazz', 'mood_relax'),
+      make(8, '摇滚力量·经典吉他', 7, '45.9万', 'style_rock', 'mood_hot')
+    ];
+  }
+
+  /** Seeds category tag tree for MusicHall tag filter sheet. */
+  private buildMusichallTagGroups(): TagFilterGroup[] {
+    const makeTag = (id: string, name: string): TagFilterItem => {
+      const tag = new TagFilterItem();
+      tag.id = id;
+      tag.name = name;
+      return tag;
+    };
+
+    const makeGroup = (name: string, tags: TagFilterItem[]): TagFilterGroup => {
+      const group = new TagFilterGroup();
+      group.groupName = name;
+      group.tags = tags;
+      return group;
+    };
+
+    return [
+      makeGroup('热门分类', [
+        makeTag('hot', '热门'),
+        makeTag('new', '最新'),
+        makeTag('official', '官方精选')
+      ]),
+      makeGroup('风格流派', [
+        makeTag('style_chinese', '华语'),
+        makeTag('style_western', '欧美'),
+        makeTag('style_kpop', 'K-POP'),
+        makeTag('style_jazz', '爵士'),
+        makeTag('style_rock', '摇滚'),
+        makeTag('style_electronic', '电子'),
+        makeTag('style_light', '轻音乐'),
+        makeTag('style_soundtrack', '影视原声')
+      ]),
+      makeGroup('心情场景', [
+        makeTag('mood_relax', '放松'),
+        makeTag('mood_hot', '嗨起来'),
+        makeTag('mood_sad', '伤感'),
+        makeTag('mood_sweet', '甜蜜'),
+        makeTag('mood_focus', '专注')
+      ])
+    ];
   }
 }

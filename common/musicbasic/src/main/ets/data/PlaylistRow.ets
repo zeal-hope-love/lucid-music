@@ -23,4 +23,6 @@ export class PlaylistRow {
   public title: Resource = $r('app.string.page_show');
   /** Ordered song ids belonging to this playlist. */
   public songIds: number[] = [];
+  /** 0 = 自建歌单, 1 = 收藏歌单 */
+  public playlistType: number = 0;
 }

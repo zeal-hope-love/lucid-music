@@ -22,7 +22,7 @@ import { StyleConstants } from '../constants/StyleConstants';
 import { BreakpointConstants } from '../constants/BreakpointConstants';
 import { LyricFile, LyricScrollEffect, LyricTopPosition } from '../constants/LyricConst';
 import { LrcEntry } from '../viewmodel/LrcEntry';
-import { SongItem } from '../viewmodel/SongData';
+import { SongItem } from 'musicbasic';
 import { parseKrcLyric, parseLrcLyric } from '../utils/LrcUtils';
 import LrcView from './LrcView';
 import { MusicDbApi } from 'musicbasic';
@@ -42,6 +42,7 @@ export struct LyricsComponent {
   @StorageLink('isFavorite') isFavorite: boolean = false;
   @Link isTablet: boolean;
   @Prop follow: boolean = false;
+  @State lyricCoverFailed: boolean = false;
   private context: common.UIAbilityContext | undefined = AppStorage.get('context');
 
   aboutToAppear() {
@@ -98,53 +99,59 @@ export struct LyricsComponent {
             if (!this.isTablet) {
               if (this.songList.length > 0 && this.selectIndex >= 0 &&
                   this.selectIndex < this.songList.length &&
-                  this.songList[this.selectIndex] &&
-                  this.songList[this.selectIndex].coverUrl) {
-                Image(this.songList[this.selectIndex].coverUrl)
-                  .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
-                    $r('app.float.label_width_sm') : $r('app.float.label_width'))
-                  .borderRadius(6)
-                  .shadow({
-                    radius: $r('app.float.shadow_radius'),
-                    color: $r('app.color.shadow_color'),
-                    offsetX: 0,
-                    offsetY: 8
-                  })
-                  .margin({ right: $r('app.float.label_margin_right') })
-                  .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
-              } else {
-                Image($r('app.media.ic_music_symbol'))
-                  .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
-                    $r('app.float.label_width_sm') : $r('app.float.label_width'))
-                  .borderRadius(6)
-                  .shadow({
-                    radius: $r('app.float.shadow_radius'),
-                    color: $r('app.color.shadow_color'),
-                    offsetX: 0,
-                    offsetY: 8
-                  })
-                  .margin({ right: $r('app.float.label_margin_right') })
-                  .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+                  this.songList[this.selectIndex]) {
+                if (this.songList[this.selectIndex].coverUrl && !this.lyricCoverFailed) {
+                  Image(this.songList[this.selectIndex].coverUrl)
+                    .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
+                      $r('app.float.label_width_sm') : $r('app.float.label_width'))
+                    .borderRadius(6)
+                    .shadow({
+                      radius: $r('app.float.shadow_radius'),
+                      color: $r('app.color.shadow_color'),
+                      offsetX: 0,
+                      offsetY: 8
+                    })
+                    .margin({ right: $r('app.float.label_margin_right') })
+                    .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+                    .onError(() => { this.lyricCoverFailed = true })
+                } else if (this.lyricCoverFailed) {
+                  Image($r('app.media.ic_music_symbol'))
+                    .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
+                      $r('app.float.label_width_sm') : $r('app.float.label_width'))
+                    .borderRadius(6)
+                    .margin({ right: $r('app.float.label_margin_right') })
+                } else if (this.songList[this.selectIndex].label) {
+                  Image(this.songList[this.selectIndex].label)
+                    .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
+                      $r('app.float.label_width_sm') : $r('app.float.label_width'))
+                    .borderRadius(6)
+                    .shadow({
+                      radius: $r('app.float.shadow_radius'),
+                      color: $r('app.color.shadow_color'),
+                      offsetX: 0,
+                      offsetY: 8
+                    })
+                    .margin({ right: $r('app.float.label_margin_right') })
+                    .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+                } else {
+                  Row()
+                    .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
+                      $r('app.float.label_width_sm') : $r('app.float.label_width'))
+                    .aspectRatio(1)
+                    .margin({ right: $r('app.float.label_margin_right') })
+                }
               }
             }
             Column() {
               Text(this.songList[this.selectIndex].title)
-                .fontSize(new BreakpointType({
-                  sm: $r('app.float.title_font_sm'),
-                  md: $r('app.float.title_font_md'),
-                  lg: $r('app.float.title_font_lg')
-                }).getValue(this.currentBreakpoint))
+                .fontSize($r('app.float.title_font_play'))
                 .fontColor(Color.White)
                 .fontWeight(PlayerConstants.FONT_WEIGHT_700)
                 .fontFamily(PlayerConstants.FONT_FAMILY_BOLD)
                 .constraintSize({ minWidth: 200 })
                 .geometryTransition('PLAYBACK_TITLE_TRANSITION', { follow: this.follow })
               Text(this.songList[this.selectIndex].singer)
-                .fontSize(new BreakpointType({
-                  sm: $r('app.float.singer_font_sm'),
-                  md: $r('app.float.singer_font_md'),
-                  lg: $r('app.float.singer_font_lg')
-                }).getValue(this.currentBreakpoint))
+                .fontSize($r('app.float.font_fourteen'))
                 .fontColor(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ?
                   $r('app.color.singer_text') : $r('sys.color.ohos_id_color_text_hint_contrary'))
                 .fontWeight(PlayerConstants.FONT_WEIGHT_500)

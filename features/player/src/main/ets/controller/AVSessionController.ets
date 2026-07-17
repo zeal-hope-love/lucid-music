@@ -65,62 +65,76 @@ export class AVSessionController {
     if (!this.avSessionImpl) {
       return
     }
-    try {
-      const title = typeof titleStr === 'string' ? titleStr : '未知歌曲'
-      const artist = typeof artistStr === 'string' ? artistStr : '未知歌手'
+    const title = typeof titleStr === 'string' ? titleStr : '未知歌曲'
+    const artist = typeof artistStr === 'string' ? artistStr : '未知歌手'
+
+    // ===== 步骤①：立即设置基本信息（title/artist/duration 必达媒体中心） =====
+    const baseMeta: avSession.AVMetadata = {
+      assetId: `${songId}`,
+      title: title,
+      artist: artist,
+      duration: duration,
+      avQueueName: 'AudioPlayerQueue',
+      avQueueId: `${songId}`
+    }
+    this.avSessionImpl.setAVMetadata(baseMeta)
+    Logger.info(`${TAG}: setAVMetadata(base) success, title=${title}, artist=${artist}, duration=${duration}`)
+
+    // ===== 步骤②：异步加载封面和歌词，成功后再更新 =====
+    if (this.context) {
       let mediaImage: PixelMap | undefined = undefined
       let lyric: string | undefined = undefined
 
-      if (this.context) {
-        // 封面：优先使用远程 URL
-        try {
-          if (coverUrl && coverUrl.length > 0) {
-            const httpResp = await http.createHttp().request(coverUrl, {
-              method: http.RequestMethod.GET,
-              connectTimeout: 5000,
-              readTimeout: 5000
-            })
-            if (httpResp.responseCode === 200 && httpResp.result) {
-              const imageSource = image.createImageSource(httpResp.result as ArrayBuffer)
-              mediaImage = await imageSource.createPixelMap()
-            }
-          } else {
+      try {
+        if (coverUrl && coverUrl.length > 0) {
+          const httpResp = await http.createHttp().request(coverUrl, {
+            method: http.RequestMethod.GET,
+            connectTimeout: 5000,
+            readTimeout: 5000
+          })
+          if (httpResp.responseCode === 200 && httpResp.result) {
+            const imageSource = image.createImageSource(httpResp.result as ArrayBuffer)
+            mediaImage = await imageSource.createPixelMap()
+          }
+        } else if (this.context) {
+          try {
             const fileData: Uint8Array = await this.context.resourceManager.getMediaContent(labelRes.id)
             mediaImage = await image.createImageSource(fileData.buffer as ArrayBuffer).createPixelMap()
-          }
-        } catch (_) {
-          Logger.warn(`${TAG}: failed to get cover image`)
+          } catch (_) { /* label 资源不可用，跳过 */ }
         }
-        // 歌词：优先使用 lyricText，否则从文件读取
-        if (lyricText && lyricText.length > 0) {
-          lyric = lyricText
-        } else if (lyricFile && lyricFile.length > 0) {
-          try {
-            const lyricData: Uint8Array = await this.context.resourceManager.getRawFileContent(lyricFile)
-            const decoder = util.TextDecoder.create('utf-8', { ignoreBOM: true })
-            lyric = decoder.decodeToString(lyricData, { stream: false })
-          } catch (_) {
-            Logger.warn(`${TAG}: failed to get lyric`)
-          }
+      } catch (_) {
+        Logger.warn(`${TAG}: failed to get cover image`)
+      }
+
+      if (lyricText && lyricText.length > 0) {
+        lyric = lyricText
+      } else if (lyricFile && lyricFile.length > 0) {
+        try {
+          const lyricData: Uint8Array = await this.context.resourceManager.getRawFileContent(lyricFile)
+          const decoder = util.TextDecoder.create('utf-8', { ignoreBOM: true })
+          lyric = decoder.decodeToString(lyricData, { stream: false })
+        } catch (_) {
+          Logger.warn(`${TAG}: failed to get lyric`)
         }
       }
 
-      const metadata: avSession.AVMetadata = {
-        assetId: `${songId}`,
-        title: title,
-        artist: artist,
-        duration: duration,
-        mediaImage: mediaImage,
-        avQueueName: 'AudioPlayerQueue',
-        avQueueId: `${songId}`
+      // ===== 步骤③：有封面或歌词则更新完整元数据 =====
+      if (mediaImage || lyric) {
+        const fullMeta: avSession.AVMetadata = {
+          assetId: `${songId}`,
+          title: title,
+          artist: artist,
+          duration: duration,
+          mediaImage: mediaImage,
+          avQueueName: 'AudioPlayerQueue',
+          avQueueId: `${songId}`
+        }
+        if (lyric) {
+          fullMeta.lyric = lyric
+        }
+        this.avSessionImpl.setAVMetadata(fullMeta)
+        Logger.info(`${TAG}: setAVMetadata(full) success, hasCover=${mediaImage !== undefined}, hasLyric=${lyric !== undefined}`)
       }
-      if (lyric) {
-        metadata.lyric = lyric
-      }
-      this.avSessionImpl.setAVMetadata(metadata)
-      Logger.info(`${TAG}: setAVMetadata success, title=${title}, hasCover=${mediaImage !== undefined}, hasLyric=${lyric !== undefined}`)
-    } catch (e) {
-      Logger.error(`${TAG}: setAVMetadata error ${JSON.stringify(e)}`)
     }
   }
 

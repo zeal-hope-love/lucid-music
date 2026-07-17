@@ -14,7 +14,8 @@ import {
 } from 'player'
 import { HomePage } from 'home'
 import { MusicHallPage } from 'musichall'
-import { MinePage, MusicListPage, MusicListParam, SettingsPage } from 'mine'
+import { MinePage, SettingsPage } from 'mine'
+import { SongListPage, SongListParam } from 'musicbasic'
 import { SearchPage } from 'search'
 import { PlaybackPage } from 'player'
 
@@ -48,6 +49,7 @@ struct Index {
     this.appState.playQueueIds = MusicDbApi.getInstance().getSongList().map((dto): number => dto.id)
     JsVmBridge.getInstance().init()
     AudioPlayerController.getInstance().initAVPlayer()
+    AVSessionController.getInstance().initAVSession()
     this.wireAVSessionCallbacks()
     this.autoInitAudioSource()
   }
@@ -105,7 +107,7 @@ struct Index {
       this.barVisibility.miniPlayerVisible = true
       this.barVisibility.tabBarVisible = false
     }
-    // 通知 MinePage 和 MusicListPage 刷新数据
+    // 通知 MinePage 和 SongListPage 刷新数据
     this.currentTabState.refreshCounter++
     this.currentTabState.favoriteVersion++
   }
@@ -178,7 +180,25 @@ struct Index {
       })
     } else if (name === 'MusicList') {
       NavDestination() {
-        MusicListPage({ param: _param as MusicListParam })
+        SongListPage({ param: _param as SongListParam })
+      }
+      .hideTitleBar(true)
+      .transition(TransitionEffect.OPACITY)
+      .backgroundColor(Color.Transparent)
+      .onAppear(() => {
+        this.barVisibility.miniPlayerVisible = true
+        this.barVisibility.tabBarVisible = false
+      })
+      .onDisAppear(() => {
+        this.restoreBarVisibility()
+      })
+      .onBackPressed(() => {
+        this.navPathStack.pop()
+        return true
+      })
+    } else if (name === 'PlaylistDetailPage') {
+      NavDestination() {
+        SongListPage({ param: _param as SongListParam })
       }
       .hideTitleBar(true)
       .transition(TransitionEffect.OPACITY)

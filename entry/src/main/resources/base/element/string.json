@@ -10,11 +10,15 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "label"
+      "value": "清梦音乐"
+    },
+    {
+      "name": "reason_background",
+      "value": "Allow applications to run in the background of music player scenes."
     },
     {
       "name": "search_title",
-      "value": "Lucid Music"
+      "value": "清梦音乐"
     },
     {
       "name": "page_show",

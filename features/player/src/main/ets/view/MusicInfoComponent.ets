@@ -17,7 +17,7 @@ import { PlayerConstants } from '../constants/PlayerConstants';
 import { StyleConstants } from '../constants/StyleConstants';
 import { BreakpointType } from '../utils/BreakpointSystem';
 import { AVSessionController } from '../controller/AVSessionController';
-import { SongItem } from '../viewmodel/SongData';
+import { SongItem } from 'musicbasic';
 import { MusicDbApi } from 'musicbasic';
 
 @Extend(Image)
@@ -37,6 +37,7 @@ export struct MusicInfoComponent {
   @StorageLink('songList') songList: SongItem[] = [];
   @StorageProp('selectIndex') @Watch('syncFavoriteState') selectIndex: number = 0;
   @State isShowControl: boolean = false;
+  @State coverLoadFailed: boolean = false;
   @StorageLink('isFavorite') isFavorite: boolean = false;
 
   aboutToAppear(): void {
@@ -84,37 +85,54 @@ export struct MusicInfoComponent {
     Row() {
       if (this.songList.length > 0 && this.selectIndex >= 0 &&
           this.selectIndex < this.songList.length &&
-          this.songList[this.selectIndex] &&
-          this.songList[this.selectIndex].coverUrl) {
-        Image(this.songList[this.selectIndex].coverUrl)
+          this.songList[this.selectIndex]) {
+        if (this.songList[this.selectIndex].coverUrl && !this.coverLoadFailed) {
+          Image(this.songList[this.selectIndex].coverUrl)
+            .width(StyleConstants.FULL_WIDTH)
+            .aspectRatio(1)
+            .borderRadius($r('app.float.cover_radius_label'))
+            .shadow({
+              radius: $r('app.float.shadow_radius'),
+              color: $r('app.color.shadow_color'),
+              offsetX: 0,
+              offsetY: 8
+            })
+            .margin($r('app.float.lyric_margin_right_sm'))
+            .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+            .onError(() => { this.coverLoadFailed = true })
+        } else if (this.coverLoadFailed) {
+          Image($r('app.media.ic_music_symbol'))
+            .width(StyleConstants.FULL_WIDTH)
+            .aspectRatio(1)
+            .borderRadius($r('app.float.cover_radius_label'))
+            .margin($r('app.float.lyric_margin_right_sm'))
+        } else if (this.songList[this.selectIndex].label) {
+          Image(this.songList[this.selectIndex].label)
+            .width(StyleConstants.FULL_WIDTH)
+            .aspectRatio(1)
+            .borderRadius($r('app.float.cover_radius_label'))
+            .shadow({
+              radius: $r('app.float.shadow_radius'),
+              color: $r('app.color.shadow_color'),
+              offsetX: 0,
+              offsetY: 8
+            })
+            .margin($r('app.float.lyric_margin_right_sm'))
+            .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
+        } else {
+          Row()
+            .width(StyleConstants.FULL_WIDTH)
+            .aspectRatio(1)
+            .margin($r('app.float.lyric_margin_right_sm'))
+        }
+      } else {
+        Row()
           .width(StyleConstants.FULL_WIDTH)
           .aspectRatio(1)
-          .borderRadius($r('app.float.cover_radius_label'))
-          .shadow({
-            radius: $r('app.float.shadow_radius'),
-            color: $r('app.color.shadow_color'),
-            offsetX: 0,
-            offsetY: 8
-          })
           .margin($r('app.float.lyric_margin_right_sm'))
-          .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
-      } else if (this.songList.length > 0 && this.selectIndex >= 0 &&
-                 this.selectIndex < this.songList.length &&
-                 this.songList[this.selectIndex]) {
-        Image(this.songList[this.selectIndex].label)
-          .width(StyleConstants.FULL_WIDTH)
-          .aspectRatio(1)
-          .borderRadius($r('app.float.cover_radius_label'))
-          .shadow({
-            radius: $r('app.float.shadow_radius'),
-            color: $r('app.color.shadow_color'),
-            offsetX: 0,
-            offsetY: 8
-          })
-          .margin($r('app.float.lyric_margin_right_sm'))
-          .geometryTransition('PLAYBACK_COVER_TRANSITION', { follow: this.follow })
       }
     }
+    .clip(false)
   }
 
   @Builder

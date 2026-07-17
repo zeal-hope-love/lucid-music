@@ -72,4 +72,9 @@ export class SongItem {
    * When non-empty, LyricsComponent parses this directly instead of reading a file.
    */
   @Trace public lyricText: string = '';
+
+  /**
+   * Whether the album cover is a dark background (affects status bar text color).
+   */
+  public isDarkBackground: boolean = false;
 }

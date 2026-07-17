@@ -561,7 +561,7 @@ export default struct shiLrcView {
             this.drawContent(this.curCanvasOffsetY, true);
           })
           .onActionEnd((event: GestureEvent) => {
-            let velocity = event.velocityY * 1.2;
+            let velocity = event.velocityY * 1.3;
             if (Math.abs(velocity) < 0.5) {
               this.scheduleAutoResume();
               return;
@@ -577,7 +577,7 @@ export default struct shiLrcView {
               end: 1
             });
             let startOffset = this.curCanvasOffsetY;
-            let totalDelta = (velocity / 1000) * 400;
+            let totalDelta = (velocity / 1000) * 600;
             let that = this;
             this.inertiaAnimator.onFrame = (value: number) => {
               let t = value;

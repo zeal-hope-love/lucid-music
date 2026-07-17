@@ -53,6 +53,22 @@
       "value": "动感电音的速度与激情"
     },
     {
+      "name": "playlist_title_my_fav",
+      "value": "我的最爱"
+    },
+    {
+      "name": "playlist_title_chill",
+      "value": "轻松时刻"
+    },
+    {
+      "name": "playlist_title_trending",
+      "value": "热门推荐"
+    },
+    {
+      "name": "playlist_title_discover",
+      "value": "新歌发现"
+    },
+    {
       "name": "playlist_detail_desc",
       "value": "节奏超燃，带你星空台步走一圈。电音的世界，动感的节拍，跃动的音符，让我们沉迷节奏海洋。"
     },

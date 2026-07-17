@@ -19,13 +19,14 @@ import { image } from '@kit.ImageKit';
 import { common } from '@kit.AbilityKit';
 import { display } from '@kit.ArkUI';
 import { curves } from '@kit.ArkUI';
+import { http } from '@kit.NetworkKit';
 import { LyricsComponent } from './LyricsComponent';
 import { MusicInfoComponent } from './MusicInfoComponent';
 import { ControlAreaComponent } from './ControlAreaComponent';
 import { BreakpointConstants } from '../constants/BreakpointConstants';
 import { StyleConstants } from '../constants/StyleConstants';
 import { PlayerConstants } from '../constants/PlayerConstants';
-import { SongItem } from '../viewmodel/SongData';
+import { SongItem } from 'musicbasic';
 import Logger from '../utils/LoggerAdapter';
 import { ColorConversion } from '../utils/ColorConversion';
 
@@ -135,10 +136,17 @@ export struct PlayerInfoComponent {
                 offset: { lg: BreakpointConstants.OFFSET_MD }
               }) {
                 Column() {
-                  Image(this.songList[this.selectIndex].label)
-                    .width(StyleConstants.FULL_WIDTH)
-                    .aspectRatio(1)
-                    .borderRadius($r('app.float.cover_radius'))
+                  if (this.songList[this.selectIndex].coverUrl) {
+                    Image(this.songList[this.selectIndex].coverUrl)
+                      .width(StyleConstants.FULL_WIDTH)
+                      .aspectRatio(1)
+                      .borderRadius($r('app.float.cover_radius'))
+                  } else {
+                    Image(this.songList[this.selectIndex].label)
+                      .width(StyleConstants.FULL_WIDTH)
+                      .aspectRatio(1)
+                      .borderRadius($r('app.float.cover_radius'))
+                  }
                   ControlAreaComponent()
                 }
                 .height(StyleConstants.FULL_HEIGHT)
@@ -184,13 +192,13 @@ export struct PlayerInfoComponent {
             // === 内容区（if/if + transition + geometryTransition） ===
             Stack() {
               if (!this.showLyrics) {
-                MusicInfoComponent({ follow: this.showLyrics || this.playbackEntering })
+                MusicInfoComponent({ follow: !this.showLyrics || this.playbackEntering })
                   .transition(TransitionEffect.IDENTITY)
                   .margin({ bottom: $r('app.float.music_component_bottom') })
               }
 
               if (this.showLyrics) {
-                LyricsComponent({ isTablet: this.isTabletFalse, follow: !this.showLyrics || this.playbackEntering })
+                LyricsComponent({ isTablet: this.isTabletFalse, follow: this.showLyrics && !this.playbackEntering })
                   .transition(
                     TransitionEffect.asymmetric(
                       TransitionEffect.translate({ x: 400 }).animation({ curve: curves.springMotion() }),
@@ -202,14 +210,14 @@ export struct PlayerInfoComponent {
             }
             .layoutWeight(1)
             .gesture(
-              PanGesture({ direction: PanDirection.Horizontal, distance: 80 })
+              PanGesture({ direction: PanDirection.Horizontal, distance: 20 })
                 .onActionEnd((event: GestureEvent) => {
-                  if (event.offsetX < -50 && !this.showLyrics) {
+                  if (event.offsetX < -20 && !this.showLyrics) {
                     this.getUIContext()?.animateTo({ curve: curves.springMotion() }, () => {
                       this.showLyrics = true;
                     })
                     this.startControlTimer();
-                  } else if (event.offsetX > 50 && this.showLyrics) {
+                  } else if (event.offsetX > 20 && this.showLyrics) {
                     this.getUIContext()?.animateTo({ curve: curves.springMotion() }, () => {
                       this.showLyrics = false;
                     })
@@ -244,6 +252,7 @@ export struct PlayerInfoComponent {
 
   /**
    * Get largest proportion color of an image.
+   * 优先使用 coverUrl（远程封面），label（本地资源）作为兜底。
    */
   getImageColor() {
     if (!this.context) {
@@ -253,37 +262,92 @@ export struct PlayerInfoComponent {
       return;
     }
     const songItem = this.songList[this.selectIndex]
-    if (!songItem || !songItem.label) {
+    if (!songItem) {
       return;
     }
     ColorConversion.setSysBarLightBackground(songItem.isDarkBackground);
-    this.context.resourceManager.getMediaContent(songItem.label.id)
-      .then((value: Uint8Array) => {
-        let buffer = value.buffer as ArrayBuffer;
-        image.createImageSource(buffer).createPixelMap().then((pixelMap) => {
-          effectKit.createColorPicker(pixelMap, (error, colorPicker) => {
-            if (error) {
-              Logger.error('Failed to create color picker.');
-            } else {
-              let color = colorPicker.getLargestProportionColor();
-              let colorArr = ColorConversion.dealColor(color.red, color.green, color.blue);
-              this.imageColor = `rgba(${colorArr[0]}, ${colorArr[1]}, ${colorArr[2]}, 1)`;
-            }
-          })
-          let headFilter = effectKit.createEffect(pixelMap);
-          if (headFilter !== null) {
-            headFilter.blur(PlayerConstants.IMAGE_BLUR);
-            headFilter.getEffectPixelMap().then((value) => {
-              this.imageLabel = value;
-            })
+    // 优先使用远程封面 URL
+    if (songItem.coverUrl) {
+      this.processRemoteCover(songItem.coverUrl, songItem);
+      return;
+    }
+    // 回退到本地 label Resource
+    if (songItem.label) {
+      this.processLabelCover(songItem);
+    }
+  }
+
+  /**
+   * 通过 http 下载远程封面图，提取主色调并生成模糊背景。
+   */
+  private processRemoteCover(coverUrl: string, songItem: SongItem): void {
+    try {
+      http.createHttp().request(coverUrl, {
+        method: http.RequestMethod.GET,
+        expectDataType: http.HttpDataType.ARRAY_BUFFER,
+        connectTimeout: 10000,
+        readTimeout: 10000
+      }).then((resp) => {
+        if (resp.responseCode !== 200 || !resp.result) {
+          Logger.warn(TAG, `cover download failed, code: ${resp.responseCode}`);
+          // 回退到 label
+          if (songItem.label) {
+            this.processLabelCover(songItem);
           }
-        })
-          .catch((error: BusinessError) => {
-            Logger.error(`createImageSource failed ${error.code} + ${error.message}`);
-          })
+          return;
+        }
+        const buffer = resp.result as ArrayBuffer;
+        this.extractImageColorAndBlur(buffer);
+      }).catch((error: BusinessError) => {
+        Logger.error(TAG, `cover download error: ${error.message}`);
+        // 回退到 label
+        if (songItem.label) {
+          this.processLabelCover(songItem);
+        }
+      })
+    } catch (e) {
+      Logger.error(TAG, `cover download exception`);
+    }
+  }
+
+  /**
+   * 从本地 label Resource 加载封面，提取主色调并生成模糊背景。
+   */
+  private processLabelCover(songItem: SongItem): void {
+    this.context!.resourceManager.getMediaContent(songItem.label.id)
+      .then((value: Uint8Array) => {
+        const buffer = value.buffer as ArrayBuffer;
+        this.extractImageColorAndBlur(buffer);
       })
       .catch((error: BusinessError) => {
-        Logger.error(`getMediaContent failed ${error.code} + ${error.message}`);
+        Logger.error(TAG, `getMediaContent failed ${error.code} + ${error.message}`);
+      })
+  }
+
+  /**
+   * 从 ArrayBuffer 创建 PixelMap，提取主色调并生成模糊背景。
+   */
+  private extractImageColorAndBlur(buffer: ArrayBuffer): void {
+    image.createImageSource(buffer).createPixelMap().then((pixelMap) => {
+      effectKit.createColorPicker(pixelMap, (error, colorPicker) => {
+        if (error) {
+          Logger.error(TAG, 'Failed to create color picker.');
+        } else {
+          let color = colorPicker.getLargestProportionColor();
+          let colorArr = ColorConversion.dealColor(color.red, color.green, color.blue);
+          this.imageColor = `rgba(${colorArr[0]}, ${colorArr[1]}, ${colorArr[2]}, 1)`;
+        }
+      })
+      let headFilter = effectKit.createEffect(pixelMap);
+      if (headFilter !== null) {
+        headFilter.blur(PlayerConstants.IMAGE_BLUR);
+        headFilter.getEffectPixelMap().then((value) => {
+          this.imageLabel = value;
+        })
+      }
+    })
+      .catch((error: BusinessError) => {
+        Logger.error(TAG, `createPixelMap failed ${error.code} + ${error.message}`);
       })
   }
 }

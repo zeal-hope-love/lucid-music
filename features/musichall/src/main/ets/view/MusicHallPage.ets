@@ -1,38 +1,139 @@
 /*
  * Lucid Music - 音乐厅页面
- * 布局：内容区
- * 底部 MiniPlayerBar + LucidTabBar 已提取到 Index.ets 统一管理
+ * 布局：标题（滑动渐隐）+ 吸顶平台 Tab 栏 + 3 列歌单网格 + 标签筛选 BindSheet。
+ * 底部 MiniPlayerBar + LucidTabBar 已提取到 Index.ets 统一管理。
  */
-import { display } from '@kit.ArkUI'
+import { Platform, PlatformLabels, MusichallPlaylistItem, TagFilterGroup, MusicDbApi } from 'musicbasic'
+import { SourceTabBar } from './SourceTabBar'
+import { PlaylistCard } from './PlaylistCard'
+import { TagFilterSheet } from './TagFilterSheet'
 
 @ComponentV2
 export struct MusicHallPage {
   @Consumer() navPathStack: NavPathStack = new NavPathStack()
+  @Local playlists: MusichallPlaylistItem[] = []
+  @Local tagGroups: TagFilterGroup[] = []
+  @Local activeSource: string = Platform.KW
+  @Local activeTagId: string = ''
+  @Local isTagSheetVisible: boolean = false
+  /** 标题透明度：0=完全隐藏，1=完全显示 */
+  @Local titleOpacity: number = 1
+  /** 标题高度：56vp 显示，0vp 隐藏 */
+  @Local titleSpace: number = 56
+  /** 排序选中索引，默认推荐 */
+  @Local activeSortIndex: number = 0
+  readonly sortOptions: string[] = ['推荐', '热门', '最新', '收藏']
+  private allPlaylists: MusichallPlaylistItem[] = []
 
-  @Computed
-  get screenWidth(): number {
-    try {
-      const d = display.getDefaultDisplaySync()
-      return Math.round(d.width * 160 / d.densityDPI)
-    } catch (_) {
-      return 360
+  aboutToAppear(): void {
+    this.loadData()
+  }
+
+  private loadData(): void {
+    const api = MusicDbApi.getInstance()
+    this.allPlaylists = api.getMusichallPlaylists()
+    this.tagGroups = api.getMusichallTagGroups()
+    this.applyFilter()
+  }
+
+  private applyFilter(): void {
+    if (this.activeTagId === '') {
+      this.playlists = [...this.allPlaylists]
+    } else {
+      this.playlists = this.allPlaylists.filter((item: MusichallPlaylistItem): boolean =>
+      item.tags.indexOf(this.activeTagId) !== -1
+      )
     }
+  }
+
+  private onTagSelect(tagId: string): void {
+    this.activeTagId = tagId
+    this.applyFilter()
+    this.isTagSheetVisible = false
+  }
+
+  private onGridScroll(firstIndex: number): void {
+    // 滚动超过 1 行（3 个卡片后）渐隐标题
+    const shouldHide: boolean = firstIndex >= 3
+    this.titleOpacity = shouldHide ? 0 : 1
+    this.titleSpace = shouldHide ? 0 : 56
+  }
+
+  /** BindSheet 的 Builder 包装（CustomBuilder 类型要求） */
+  @Builder
+  tagSheetBuilder() {
+    TagFilterSheet({
+      tagGroups: this.tagGroups,
+      activeTagId: this.activeTagId,
+      sortOptions: this.sortOptions,
+      activeSortIndex: this.activeSortIndex,
+      onTagSelect: (tagId: string): void => {
+        this.onTagSelect(tagId)
+      },
+      onSortChange: (index: number): void => {
+        this.activeSortIndex = index
+      }
+    })
   }
 
   build() {
     Column() {
-      Text('音乐厅')
-        .fontSize(28)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.ohos_id_color_text_primary'))
-        .width('90%')
-        .margin({ top: 64 })
+      // === 标题（与首页对齐，滑动渐隐） ===
+      Row() {
+        Text('音乐厅')
+          .fontSize(28)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.ohos_id_color_text_primary'))
+      }
+      .width('90%')
+      .margin({ top: 64 })
+      .opacity(this.titleOpacity)
+      .height(this.titleSpace)
+      .animation({ duration: 200, curve: Curve.EaseOut })
 
-      Blank()
+      // === 吸顶 Tab 栏 ===
+      SourceTabBar({
+        activeSource: this.activeSource,
+        onSourceChange: (source: string): void => {
+          this.activeSource = source
+          this.activeTagId = ''
+          // 预留：后续切换平台时重新拉取数据
+        },
+        onFilterClick: (): void => {
+          this.isTagSheetVisible = true
+        }
+      })
+        .width('90%')
+
+      // === 3 列歌单网格 ===
+      Grid() {
+        ForEach(this.playlists, (item: MusichallPlaylistItem) => {
+          GridItem() {
+            PlaylistCard({ item: item })
+          }
+        }, (item: MusichallPlaylistItem): string => `${item.playlistId}`)
+      }
+      .columnsTemplate('1fr 1fr 1fr')
+      .columnsGap(10)
+      .rowsGap(16)
+      .width('90%')
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .onScrollIndex((first: number): void => {
+        this.onGridScroll(first)
+      })
     }
     .width('100%')
     .height('100%')
     .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
     .padding({ bottom: 160 })
+    // === 标签筛选 BindSheet ===
+    .bindSheet($$this.isTagSheetVisible, this.tagSheetBuilder,
+      {
+        height: SheetSize.MEDIUM,
+        showClose: true,
+        backgroundColor: $r('sys.color.ohos_id_color_sub_background')
+      }
+    )
   }
 }

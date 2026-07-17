@@ -1,27 +1,38 @@
 /*
- * Lucid Music - 音乐列表页（本地/最近播放/收藏）
+ * Lucid Music - 共用歌曲列表页
+ * 支持两种数据模式：
+ *   1. listType: 'local' | 'recent' | 'favorite' — 按来源加载
+ *   2. playlistId > 0 — 按歌单加载
+ * 本地/最近播放/收藏 + 歌单详情 共用此 UI
  */
 import { AppStorageV2 } from '@kit.ArkUI'
-import { AppStorageKeys, CurrentTabState, MusicAppState, MusicDbApi, SongApiDto, AreaWithHdsTabBar } from 'musicbasic'
-import { AudioPlayerController } from 'player'
+import {
+  AppStorageKeys, CurrentTabState, PlaybackIntentState, MusicDbApi, SongApiDto
+} from 'musicbasic'
+import { AreaWithHdsTabBar } from './floating/AreaWithHdsTabBar'
 
-export class MusicListParam {
+export class SongListParam {
   title: string
+  /** 'local' | 'recent' | 'favorite' — 按来源类型 */
   listType: string
-  constructor(title: string, listType: string = 'local') {
+  /** 歌单 ID，> 0 时优先使用歌单数据 */
+  playlistId: number
+  constructor(title: string, listType: string = '', playlistId: number = 0) {
     this.title = title
     this.listType = listType
+    this.playlistId = playlistId
   }
 }
 
 @ComponentV2
-export struct MusicListPage {
+export struct SongListPage {
   @Consumer() navPathStack: NavPathStack = new NavPathStack()
-  @Param param: MusicListParam | undefined = undefined
+  @Param param: SongListParam | undefined = undefined
   @Local songs: SongApiDto[] = []
-  @Local pageTitle: string = '本地'
-  private appState: MusicAppState =
-    AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE, () => new MusicAppState())!
+  @Local pageTitle: string = ''
+
+  private intentState: PlaybackIntentState =
+    AppStorageV2.connect(PlaybackIntentState, AppStorageKeys.PLAYBACK_INTENT_STATE, () => new PlaybackIntentState())!
   @Local currentTabState: CurrentTabState =
     AppStorageV2.connect(CurrentTabState, AppStorageKeys.CURRENT_TAB_STATE, () => new CurrentTabState())!
 
@@ -37,41 +48,36 @@ export struct MusicListPage {
   }
 
   private loadData(): void {
-    if (this.param !== undefined) {
-      if (this.param.title.length > 0) {
-        this.pageTitle = this.param.title
-      }
-      const api = MusicDbApi.getInstance()
-      if (this.param.listType === 'local') {
-        this.songs = api.getSongList()
-      } else if (this.param.listType === 'recent') {
-        this.songs = api.getRecentPlaySongs()
-      } else if (this.param.listType === 'favorite') {
-        this.songs = api.getFavoriteSongs()
-      } else {
-        this.songs = []
-      }
+    if (this.param === undefined) {
+      return
+    }
+    this.pageTitle = this.param.title
+    const api = MusicDbApi.getInstance()
+
+    // 歌单模式优先
+    if (this.param.playlistId > 0) {
+      this.songs = api.getPlaylistSongItems(this.param.playlistId)
+      return
+    }
+
+    // 来源模式
+    if (this.param.listType === 'local') {
+      this.songs = api.getSongList()
+    } else if (this.param.listType === 'recent') {
+      this.songs = api.getRecentPlaySongs()
+    } else if (this.param.listType === 'favorite') {
+      this.songs = api.getFavoriteSongs()
+    } else {
+      this.songs = []
     }
   }
 
   private onSongTap(index: number): void {
-    const clickedId = this.songs[index].id
-    const currentSongId = this.appState.playQueueIds[this.appState.selectIndex]
-    // 同一首歌
-    if (currentSongId === clickedId) {
-      if (this.appState.isPlay) {
-        // 正在播放：不操作
-        return
-      }
-      // 暂停中：恢复播放
-      AudioPlayerController.getInstance().play()
-      return
-    }
-    // 不同歌曲：原有逻辑
-    this.appState.playQueueIds = this.songs.map((dto): number => dto.id)
-    this.appState.selectIndex = index
-    this.appState.isPlay = true
-    AudioPlayerController.getInstance().playCurrent()
+    const songIds = this.songs.map((dto): number => dto.id)
+    // 通过 PlaybackIntentState 分发播放请求，由 Index.ets → PlaybackIntentDispatcher → AudioPlayerController 处理
+    this.intentState.pendingQueueIds = songIds
+    this.intentState.pendingSelectIndex = index
+    this.intentState.requestVersion++
   }
 
   @Builder

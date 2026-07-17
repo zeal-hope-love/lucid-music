@@ -20,8 +20,8 @@ export { CustomButton } from './src/main/ets/view/CustomButton'
 
 // avplayer 数据模型
 export { LrcEntry } from './src/main/ets/viewmodel/LrcEntry'
-export { SongItem as avSongItem } from './src/main/ets/viewmodel/SongData'
-export { SongDataSource } from './src/main/ets/viewmodel/SongDataSource'
+export { SongItem as avSongItem } from 'musicbasic'
+export { SongDataSource } from 'musicbasic'
 
 // avplayer 常量
 export { PlayerConstants, MusicPlayMode, PlayModeSwitchList } from './src/main/ets/constants/PlayerConstants'
@@ -31,6 +31,7 @@ export { StyleConstants } from './src/main/ets/constants/StyleConstants'
 export { ContentConstants } from './src/main/ets/constants/ContentConstants'
 
 // avplayer 工具
+export { BackgroundUtil } from './src/main/ets/utils/BackgroundUtil'
 export { parseLrcLyric, parseKrcLyric, angleToRadian } from './src/main/ets/utils/LrcUtils'
 export { ColorConversion } from './src/main/ets/utils/ColorConversion'
 export { BreakpointType, BreakpointSystem } from './src/main/ets/utils/BreakpointSystem'

@@ -35,6 +35,10 @@ export class PlaybackIntentState {
   @Trace public remoteSongCover: string = '';
   /** Remote song lyric text (LRC format). */
   @Trace public remoteLyricText: string = '';
+  /** Pending new queue song IDs (set when switching queues). */
+  @Trace public pendingQueueIds: number[] = [];
+  /** Pending select index in the new queue. */
+  @Trace public pendingSelectIndex: number = 0;
 
   /** Reset remote-playback fields after consumption. */
   public resetRemote(): void {

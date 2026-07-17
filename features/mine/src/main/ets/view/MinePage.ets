@@ -5,8 +5,8 @@
  */
 import { display } from '@kit.ArkUI'
 import { AppStorageV2 } from '@kit.ArkUI'
-import { AppStorageKeys, CurrentTabState, MusicDbApi, RouterUrlConstants } from 'musicbasic'
-import { MusicListParam } from './MusicListPage'
+import { AppStorageKeys, CurrentTabState, MusicDbApi, RouterUrlConstants, SongListParam } from 'musicbasic'
+import { PlaylistSection } from './PlaylistSection'
 
 interface QuickEntry {
   icon: Resource
@@ -91,13 +91,16 @@ export struct MinePage {
               '收藏': 'favorite'
             }
             this.navPathStack.pushPath(
-              new NavPathInfo(RouterUrlConstants.MUSIC_LIST, new MusicListParam(entry.label, typeMap[entry.label] ?? 'local'))
+              new NavPathInfo(RouterUrlConstants.MUSIC_LIST, new SongListParam(entry.label, typeMap[entry.label] ?? 'local'))
             )
           })
         })
       }
       .width('90%')
       .margin({ top: 24 })
+
+      // === 歌单区域 ===
+      PlaylistSection()
 
       // === 设置入口 ===
       Row() {

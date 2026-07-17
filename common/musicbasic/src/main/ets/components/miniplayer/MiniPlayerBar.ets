@@ -11,6 +11,11 @@ import { PlaybackIntentState } from '../../model/PlaybackIntentState'
 import { MusicDbApi } from '../../util/MusicDbApi'
 import { AreaWithHdsTabBar } from '../floating/AreaWithHdsTabBar'
 
+interface LrcEntry {
+  time: number
+  text: string
+}
+
 @ComponentV2
 export struct MiniPlayerBar {
   @Param @Require barWidth: number
@@ -24,6 +29,32 @@ export struct MiniPlayerBar {
   @Local intentState: PlaybackIntentState =
     AppStorageV2.connect(PlaybackIntentState, AppStorageKeys.PLAYBACK_INTENT_STATE, () => new PlaybackIntentState())!
   @Local isShowPlayList: boolean = false
+
+  /** 歌词缓存：上次解析的原始文本 */
+  private cachedLyricText: string = ''
+  /** 歌词缓存：已解析的（时间ms, 文本）列表 */
+  private cachedLrcEntries: Array<LrcEntry> = []
+
+  /** 轻量 LRC 解析，只提取时间和纯文本行 */
+  private parseLrcLyricForMiniBar(text: string): Array<LrcEntry> {
+    const result: Array<LrcEntry> = []
+    const lines = text.split('\n')
+    const lrcLineRegex = /\[(\d+):(\d+(?:\.\d+)?)\](.*)/
+    for (const line of lines) {
+      const match = line.match(lrcLineRegex)
+      if (match) {
+        const min = parseInt(match[1])
+        const sec = parseFloat(match[2])
+        const timeMs = (min * 60 + sec) * 1000
+        const lineText = match[3].trim()
+        if (lineText) {
+          result.push({ time: timeMs, text: lineText })
+        }
+      }
+    }
+    result.sort((a, b) => a.time - b.time)
+    return result
+  }
 
   @Computed
   get coverSource(): Resource | string {
@@ -59,14 +90,36 @@ export struct MiniPlayerBar {
     if (status === 'requesting_url' || status === 'preparing' || status === 'error') {
       return this.appState.playbackStatusMessage || status
     }
-    // 就绪/播放中：显示歌词第一句（去掉时间标签）
     const lyric = this.appState.getCurrentSongItem()?.lyricText
     if (!lyric) {
       return ''
     }
-    const firstLine = lyric.split('\n')[0] || lyric
-    // 去掉 LRC 时间标签 [xx:xx.xx] 和元数据标签 [ti:] [ar:] 等
-    return firstLine.replace(/\[.*?\]/g, '').trim()
+    // 读取 progress 使 @Computed 随播放进度实时更新
+    const progressMs = this.appState.progress
+
+    // 歌词文本变化时重新解析并缓存
+    if (lyric !== this.cachedLyricText) {
+      this.cachedLyricText = lyric
+      this.cachedLrcEntries = this.parseLrcLyricForMiniBar(lyric)
+    }
+
+    // 无解析条目：回退到首行纯文本
+    const entries = this.cachedLrcEntries
+    if (entries.length === 0) {
+      const firstLine = lyric.split('\n')[0] || lyric
+      return firstLine.replace(/\[.*?\]/g, '').trim()
+    }
+
+    // 查找当前播放进度对应的歌词行
+    let currentText = entries[0].text
+    for (const entry of entries) {
+      if (entry.time <= progressMs) {
+        currentText = entry.text
+      } else {
+        break
+      }
+    }
+    return currentText
   }
 
   @Computed

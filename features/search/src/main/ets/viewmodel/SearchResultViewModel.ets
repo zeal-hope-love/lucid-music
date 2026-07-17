@@ -8,6 +8,7 @@ import { AppStorageV2 } from '@kit.ArkUI'
 import { SearchResultItem } from '../model/SearchResultItem'
 import { MusicApiService } from '../service/MusicApiService'
 import type { PlayUrlResult } from '../service/MusicApiService'
+import { AudioSourceExecutor } from '../service/AudioSourceExecutor'
 
 import { DEFAULT_PLATFORM_TABS, PlatformTab, SearchPlatform } from './SearchViewModel'
 
@@ -56,7 +57,7 @@ export class SearchResultViewModel {
   }
 
   /**
-   * 触发播放指定歌曲（异步获取播放 URL）
+   * 触发播放指定歌曲（JSVM 音源脚本优先，直接 API 兜底）
    */
   public async playSong(item: SearchResultItem): Promise<void> {
     Logger.info(`${TAG}: playSong id=${item.songId} title=${item.title} source=${item.source}`)
@@ -69,23 +70,47 @@ export class SearchResultViewModel {
     this.intentState.remoteSongName = item.title as string
     this.intentState.remoteSongSinger = item.singer as string
     this.intentState.remoteSongCover = item.coverUrl || item.cover
+    Logger.info(`${TAG}: playSong cover from search: ${(item.coverUrl || item.cover).substring(0, 50)}, source=${item.source}`)
 
     try {
-      const result: PlayUrlResult = await MusicApiService.getPlayUrl(item.songId, item.source, item.rawFields)
-      if (result.url) {
-        Logger.info(`${TAG}: playUrl obtained, length=${result.url.length}`)
-        this.intentState.remoteUrl = result.url
+      // === 优先：通过 JSVM 音源脚本获取 URL ===
+      const jsvmResult = await AudioSourceExecutor.getInstance().getPlayUrl(item.songId, item.source)
+      Logger.info(`${TAG}: JSVM result - isNull=${jsvmResult === null}, hasUrl=${!!(jsvmResult && jsvmResult.url)}, hasLyrics=${!!(jsvmResult && jsvmResult.lyrics)}, hasCover=${!!(jsvmResult && jsvmResult.cover)}, urlLen=${jsvmResult?.url?.length ?? 0}`)
+      if (jsvmResult && jsvmResult.url) {
+        Logger.info(`${TAG}: JSVM playUrl obtained, length=${jsvmResult.url.length}`)
+        this.intentState.remoteUrl = jsvmResult.url
+        if (jsvmResult.lyrics) {
+          this.intentState.remoteLyricText = jsvmResult.lyrics
+        }
+        if (jsvmResult.cover) {
+          this.intentState.remoteSongCover = jsvmResult.cover
+        }
       } else {
-        Logger.warn(`${TAG}: playUrl empty for ${item.songId}`)
+        // === 兜底：直接 API ===
+        Logger.info(`${TAG}: JSVM unavailable, falling back to direct API`)
+        const result: PlayUrlResult = await MusicApiService.getPlayUrl(item.songId, item.source, item.rawFields)
+        if (result.url) {
+          Logger.info(`${TAG}: API playUrl obtained, length=${result.url.length}`)
+          this.intentState.remoteUrl = result.url
+        } else {
+          Logger.warn(`${TAG}: playUrl empty for ${item.songId}`)
+        }
+        Logger.info(`${TAG}: API cover result - hasCover=${!!result.cover}, coverLen=${result.cover?.length ?? 0}, coverPreview=${(result.cover || '').substring(0, 80)}`)
+        if (result.lyrics) {
+          this.intentState.remoteLyricText = result.lyrics
+        }
+        if (result.cover) {
+          this.intentState.remoteSongCover = result.cover
+        }
+      }
+
+      // 检查是否获取到 URL
+      if (!this.intentState.remoteUrl) {
         this.appState.playbackStatus = 'error'
         this.appState.playbackStatusMessage = '获取播放地址失败'
         AppStorage.setOrCreate('playbackStatus', 'error')
         AppStorage.setOrCreate('playbackStatusMessage', '获取播放地址失败')
         this.intentState.remoteUrl = ''
-      }
-      if (result.lyrics) {
-        this.intentState.remoteLyricText = result.lyrics
-        Logger.info(`${TAG}: lyrics obtained, length=${result.lyrics.length}`)
       }
     } catch (e) {
       Logger.error(`${TAG}: getPlayUrl error ${JSON.stringify(e)}`)

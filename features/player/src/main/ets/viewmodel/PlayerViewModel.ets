@@ -1,8 +1,10 @@
 /*
  * PlayerViewModel - 迷你播放器 ViewModel（移植自 MusicHome）
+ * 所有播放操作委托给 AudioPlayerController 统一处理。
  */
 import { AppStorageV2, UIContext } from '@kit.ArkUI';
 import { AppStorageKeys, Logger, MusicAppState, MusicDbApi, SongItem } from 'musicbasic';
+import { AudioPlayerController } from '../controller/AudioPlayerController';
 
 const TAG = 'PlayerViewModel';
 
@@ -21,29 +23,29 @@ export class PlayerViewModel {
     return item?.singer ?? '未在播放';
   }
 
-  public songCover(): Resource {
+  /** 封面来源：coverUrl 优先，label 兜底。 */
+  public songCover(): Resource | string {
     const item = this.appState.getCurrentSongItem();
-    if (item !== undefined) {
+    if (item) {
+      if (item.coverUrl) {
+        return item.coverUrl;
+      }
       return item.label;
     }
     return $r('app.string.page_show');
   }
 
   public togglePlayPause(): void {
-    this.appState.isPlay = !this.appState.isPlay;
-    Logger.info(`${TAG}: togglePlayPause isPlay=${this.appState.isPlay}`);
+    AudioPlayerController.getInstance().togglePlay();
+    Logger.info(`${TAG}: togglePlayPause`);
   }
 
   public playNext(): void {
-    if (this.appState.selectIndex < this.appState.playQueueIds.length - 1) {
-      this.appState.selectIndex++;
-    }
+    AudioPlayerController.getInstance().playNext();
   }
 
   public playPrevious(): void {
-    if (this.appState.selectIndex > 0) {
-      this.appState.selectIndex--;
-    }
+    AudioPlayerController.getInstance().playPrevious();
   }
 
   public openFullScreenWithSharedElementTransition(uiContext: UIContext): void {

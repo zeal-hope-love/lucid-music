@@ -15,6 +15,8 @@
 
 
 import { HeroCardApiDto, RecommendCardApiDto, SongApiDto, TabApiDto } from '../api/MusicApiDtos';
+import { MusichallPlaylistItem, TagFilterGroup } from '../data/MusichallPlaylistItem';
+import { PlaylistRow } from '../data/PlaylistRow';
 import { RecommendFeedKind, RecommendFeedRow } from '../data/RecommendFeedRow';
 import { SongRow } from '../data/SongRow';
 import { MusicMemoryStore } from '../db/MusicMemoryStore';
@@ -159,6 +161,30 @@ export class MusicDbApi {
       }
     }
     return out;
+  }
+
+  // ==================== 歌单 ====================
+
+  /** @returns Own playlists (playlistType === 0). */
+  public getOwnPlaylists(): PlaylistRow[] {
+    return this.store.playlists.filter((p) => p.playlistType === 0);
+  }
+
+  /** @returns Collected playlists (playlistType === 1). */
+  public getCollectedPlaylists(): PlaylistRow[] {
+    return this.store.playlists.filter((p) => p.playlistType === 1);
+  }
+
+  // ==================== MusicHall 歌单展示 ====================
+
+  /** @returns MusicHall 歌单展示列表（封面、播放量等 UI 数据）。 */
+  public getMusichallPlaylists(): MusichallPlaylistItem[] {
+    return this.store.musichallPlaylists;
+  }
+
+  /** @returns MusicHall 分类标签树。 */
+  public getMusichallTagGroups(): TagFilterGroup[] {
+    return this.store.musichallTagGroups;
   }
 
   // ==================== 最近播放 ====================

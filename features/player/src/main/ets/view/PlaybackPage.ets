@@ -6,9 +6,8 @@ import { AppStorageV2 } from '@kit.ArkUI'
 import { common } from '@kit.AbilityKit'
 import { AppStorageKeys, getStatusBarTopVpFromWindowUtil, MusicAppState, MusicDbApi, WindowUtil } from 'musicbasic'
 import { PlayerInfoComponent } from './PlayerInfoComponent'
-import { MusicPlayMode, DEFAULT_VOLUME } from '../constants/PlayerConstants'
 import { BreakpointConstants } from '../constants/BreakpointConstants'
-import { SongItem as PlayerSongItem } from '../viewmodel/SongData'
+import { SongItem as PlayerSongItem } from 'musicbasic'
 
 @Component
 export struct PlaybackPage {
@@ -37,14 +36,15 @@ export struct PlaybackPage {
     if (AppStorage.get('imageColor') === undefined) {
       AppStorage.setOrCreate('imageColor', 'rgba(0, 0, 2, 1.00)')
     }
+    // 从 V2 同步到 V1
     AppStorage.setOrCreate('isPlay', this.appState.isPlay)
     AppStorage.setOrCreate('progress', this.appState.progress)
     AppStorage.setOrCreate('progressMax', this.appState.progressMax)
     AppStorage.setOrCreate('currentTime', this.appState.currentTime)
     AppStorage.setOrCreate('totalTime', this.appState.totalTime)
-    AppStorage.setOrCreate('playMode', MusicPlayMode.ORDER)
-    AppStorage.setOrCreate('isSilentMode', false)
-    AppStorage.setOrCreate('currentVolume', DEFAULT_VOLUME)
+    AppStorage.setOrCreate('playMode', this.appState.playMode)
+    AppStorage.setOrCreate('isSilentMode', this.appState.isSilentMode)
+    AppStorage.setOrCreate('currentVolume', this.appState.currentVolume)
     if (!AppStorage.get('context')) {
       AppStorage.setOrCreate('context', getContext(this) as common.UIAbilityContext)
     }
@@ -56,7 +56,7 @@ export struct PlaybackPage {
     if (!songItem) {
       return
     }
-    // 构建 features/player 兼容的 SongItem
+    // 构建 songItem（现在 common 和 player 共用同一个 SongItem 类型）
     const playerSongItem = new PlayerSongItem()
     playerSongItem.id = songItem.id
     playerSongItem.title = songItem.title
@@ -66,6 +66,7 @@ export struct PlaybackPage {
     playerSongItem.lyric = songItem.lyric
     playerSongItem.coverUrl = songItem.coverUrl || ''
     playerSongItem.lyricText = songItem.lyricText || ''
+    playerSongItem.isDarkBackground = songItem.isDarkBackground
 
     // 写入 songList（替换已有同 ID 条目，插入首位）
     const existingList = AppStorage.get('songList') as Object[]
@@ -76,8 +77,9 @@ export struct PlaybackPage {
       newList = [playerSongItem as Object, ...filtered]
     }
     AppStorage.setOrCreate('songList', newList)
+    // 同步 selectIndex 从 V2（不再强制置 0）
     AppStorage.setOrCreate('selectIndex', 0)
-    AppStorage.setOrCreate('isFavorite', MusicDbApi.getInstance().isFavorite(playerSongItem.id))
+    AppStorage.setOrCreate('isFavorite', this.appState.isFavorite)
   }
 
   build() {

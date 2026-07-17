@@ -11,6 +11,7 @@ import {
 import { AppStorageV2 } from '@kit.ArkUI'
 import { MediaTools } from './MediaTools'
 import { AVSessionController } from './AVSessionController'
+import { BackgroundUtil } from '../utils/BackgroundUtil'
 import { MusicPlayMode } from '../constants/PlayerConstants'
 
 const TAG = 'AudioPlayerController'
@@ -30,6 +31,7 @@ export class AudioPlayerController {
   private avSessionController: AVSessionController = AVSessionController.getInstance()
   private currentState: media.AVPlayerState = 'idle'
   private waitPlay: boolean = false
+  private preparingTimer: number = -1
   private static instance: AudioPlayerController | undefined
   private appState: MusicAppState
   private playMode: MusicPlayMode = MusicPlayMode.ORDER
@@ -76,6 +78,12 @@ export class AudioPlayerController {
       await this.avPlayer.reset()
     }
     this.syncPlaybackStatus('preparing', '正在准备播放...')
+    // 清除旧超时，设置15秒兜底超时
+    this.clearPreparingTimer()
+    this.preparingTimer = setTimeout(() => {
+      Logger.warn(`${TAG}: loadAndPlay timeout, state=${this.currentState}`)
+      this.syncPlaybackStatus('error', '播放准备超时，请重试')
+    }, 15000)
     if (url.startsWith('http://') || url.startsWith('https://')) {
       this.avPlayer.url = url
     } else {
@@ -103,6 +111,7 @@ export class AudioPlayerController {
     await this.avPlayer.play()
     this.waitPlay = false
     this.updateIsPlay(true)
+    this.startBgTask()
   }
 
   public pause(): void {
@@ -111,6 +120,7 @@ export class AudioPlayerController {
     }
     this.avPlayer.pause()
     this.updateIsPlay(false)
+    this.stopBgTask()
   }
 
   public togglePlay(): void {
@@ -125,7 +135,80 @@ export class AudioPlayerController {
     if (!this.avPlayer) {
       return
     }
+    const allowedStates = ['prepared', 'playing', 'paused', 'completed']
+    if (!allowedStates.includes(this.currentState)) {
+      Logger.warn(`${TAG}: seek denied, current state=${this.currentState} not in [${allowedStates.join(',')}]`)
+      return
+    }
     this.avPlayer.seek(ms)
+  }
+
+  /**
+   * 从外部（如 MusicListPage）发起播放：设置队列 + 选中索引 + 开始播放。
+   * 这是统一的外部播放请求入口。
+   */
+  public async playSongAt(queueIds: number[], index: number): Promise<void> {
+    this.appState.playQueueIds = [...queueIds]
+    this.appState.selectIndex = index
+    this.appState.isPlay = true
+    this.appState.remoteSongItem = null
+    this.syncStateForNewSong()
+    AppStorage.setOrCreate('isPlay', true)
+    await this.playCurrent()
+  }
+
+  /**
+   * 从播放列表内点击切歌：只更新索引并播放。
+   */
+  public switchToIndex(index: number): void {
+    if (index < 0 || index >= this.appState.getQueueLength()) {
+      return
+    }
+    this.appState.selectIndex = index
+    this.appState.remoteSongItem = null
+    this.syncStateForNewSong()
+    this.playCurrent()
+  }
+
+  /**
+   * 切换收藏状态。
+   */
+  public toggleFavorite(): void {
+    this.appState.isFavorite = !this.appState.isFavorite
+  }
+
+  /**
+   * 切歌时统一同步状态到 V1 和 V2：
+   * 1. 进度归零（防止旧进度残留）
+   * 2. songList 同步到 V1（解决详细页显示旧歌曲问题）
+   * 3. isFavorite 同步到 V1
+   */
+  public syncStateForNewSong(): void {
+    // 1. 进度归零 (V2 + V1)
+    this.appState.progress = 0
+    this.appState.currentTime = '00:00'
+    this.appState.progressMax = 0
+    this.appState.totalTime = '00:00'
+    AppStorage.setOrCreate('progress', 0)
+    AppStorage.setOrCreate('currentTime', '00:00')
+    AppStorage.setOrCreate('progressMax', 0)
+    AppStorage.setOrCreate('totalTime', '00:00')
+
+    // 2. 同步 songList 到 V1（当前歌曲在首位）
+    const songItem = this.appState.getCurrentSongItem()
+    if (songItem) {
+      const list: Object[] = [songItem as Object]
+      AppStorage.setOrCreate('songList', list)
+      AppStorage.setOrCreate('selectIndex', 0)
+    }
+
+    // 3. 同步 isFavorite 到 V1
+    const item = this.appState.getCurrentSongItem()
+    if (item) {
+      const fav = MusicDbApi.getInstance().isFavorite(item.id)
+      this.appState.isFavorite = fav
+      AppStorage.setOrCreate('isFavorite', fav)
+    }
   }
 
   // ==================== 切歌 ====================
@@ -152,7 +235,7 @@ export class AudioPlayerController {
     }
     this.appState.selectIndex = nextIndex
     this.appState.remoteSongItem = null
-    AppStorage.setOrCreate('selectIndex', nextIndex)
+    this.syncStateForNewSong()
     this.playCurrent()
   }
 
@@ -177,7 +260,7 @@ export class AudioPlayerController {
     }
     this.appState.selectIndex = prevIndex
     this.appState.remoteSongItem = null
-    AppStorage.setOrCreate('selectIndex', prevIndex)
+    this.syncStateForNewSong()
     this.playCurrent()
   }
 
@@ -190,10 +273,18 @@ export class AudioPlayerController {
     MusicDbApi.getInstance().addRecentPlay(songItem.id)
     try {
       const url: string = songItem.src
+      Logger.info(`${TAG}: playCurrent srcUrl - prefix=${url.substring(0, 100)}, len=${url.length}, id=${songItem.id}`)
       if (url) {
         await this.loadAndPlay(url)
       } else {
         Logger.warn(`${TAG}: no audio source for current song`)
+        this.syncPlaybackStatus('error', '获取播放地址失败')
+        this.appState.isPlay = false
+        this.stopBgTask()
+        this.updateIsPlay(false)
+        if (this.avPlayer && this.currentState !== 'idle') {
+          await this.avPlayer.reset()
+        }
       }
     } catch (e) {
       Logger.error(`${TAG}: playCurrent error ${JSON.stringify(e)}`)
@@ -224,6 +315,7 @@ export class AudioPlayerController {
 
   public setPlayMode(mode: MusicPlayMode): void {
     this.playMode = mode
+    this.appState.playMode = mode
     AppStorage.setOrCreate('playMode', mode)
     this.avSessionController.setPlayModeToAVSession(mode)
   }
@@ -237,7 +329,33 @@ export class AudioPlayerController {
       return
     }
     this.isMuted = muted
+    this.appState.isSilentMode = muted
     this.avPlayer.setMediaMuted(media.MediaType.MEDIA_TYPE_AUD, muted)
+  }
+
+  // ==================== 后台长时任务 ====================
+
+  private startBgTask(): void {
+    const ctx = AppStorage.get('context') as common.UIAbilityContext
+    if (ctx) {
+      BackgroundUtil.startContinuousTask(ctx)
+    }
+  }
+
+  private stopBgTask(): void {
+    const ctx = AppStorage.get('context') as common.UIAbilityContext
+    if (ctx) {
+      BackgroundUtil.stopContinuousTask(ctx)
+    }
+  }
+
+  // ==================== 超时清理 ====================
+
+  private clearPreparingTimer(): void {
+    if (this.preparingTimer !== -1) {
+      clearTimeout(this.preparingTimer)
+      this.preparingTimer = -1
+    }
   }
 
   // ==================== 释放 ====================
@@ -246,6 +364,8 @@ export class AudioPlayerController {
     if (!this.avPlayer) {
       return
     }
+    this.clearPreparingTimer()
+    this.stopBgTask()
     await this.avPlayer.release()
     this.avPlayer = undefined
     this.currentState = 'idle'
@@ -275,6 +395,7 @@ export class AudioPlayerController {
           await this.avPlayer!.prepare()
           break
         case 'prepared':
+          this.clearPreparingTimer()
           this.appState.progressMax = this.avPlayer!.duration
           this.appState.totalTime = MediaTools.msToCountdownTime(this.avPlayer!.duration)
           this.syncPlaybackStatus('ready', '')
@@ -286,16 +407,20 @@ export class AudioPlayerController {
           break
         case 'playing':
           this.updateIsPlay(true)
+          this.startBgTask()
           break
         case 'paused':
           this.updateIsPlay(false)
+          this.stopBgTask()
           break
         case 'completed':
           this.updateIsPlay(false)
+          this.stopBgTask()
           this.playNext()
           break
         case 'stopped':
           this.updateIsPlay(false)
+          this.stopBgTask()
           break
       }
     })
@@ -316,6 +441,9 @@ export class AudioPlayerController {
       return
     }
     this.avPlayer.on('timeUpdate', (time: number) => {
+      if (this.currentState !== 'playing') {
+        return
+      }
       this.appState.progress = time
       const currentTimeStr: string = MediaTools.msToCountdownTime(time)
       this.appState.currentTime = currentTimeStr
@@ -381,7 +509,7 @@ export class AudioPlayerController {
       if (songItem) {
         const title = typeof songItem.title === 'string' ? songItem.title : '未知歌曲'
         const artist = typeof songItem.singer === 'string' ? songItem.singer : '未知歌手'
-        this.avSessionController.updateMetadata(
+        await this.avSessionController.updateMetadata(
           songItem.id, title, artist, songItem.label, songItem.lyric,
           this.appState.progressMax, songItem.lyricText || '', songItem.coverUrl || ''
         )
@@ -392,7 +520,7 @@ export class AudioPlayerController {
         }
       }
     } catch (e) {
-      Logger.warn(`${TAG}: AVSession init skipped: ${JSON.stringify(e)}`)
+      Logger.error(`${TAG}: AVSession init failed: ${JSON.stringify(e)}`)
     }
   }
 
@@ -402,7 +530,7 @@ export class AudioPlayerController {
     AppStorage.setOrCreate('isPlay', isPlay)
   }
 
-  private syncPlaybackStatus(status: string, message: string): void {
+  public syncPlaybackStatus(status: string, message: string): void {
     this.appState.playbackStatus = status
     this.appState.playbackStatusMessage = message
     AppStorage.setOrCreate('playbackStatus', status)

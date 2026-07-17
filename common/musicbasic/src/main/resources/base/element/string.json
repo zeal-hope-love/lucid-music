@@ -53,6 +53,22 @@
       "value": "Speed and Passion of Dynamic Electronic Music"
     },
     {
+      "name": "playlist_title_my_fav",
+      "value": "My Favorites"
+    },
+    {
+      "name": "playlist_title_chill",
+      "value": "Chill Time"
+    },
+    {
+      "name": "playlist_title_trending",
+      "value": "Trending Now"
+    },
+    {
+      "name": "playlist_title_discover",
+      "value": "Discover Weekly"
+    },
+    {
       "name": "playlist_detail_desc",
       "value": "High-energy rhythm — step into the world of electronic beats and soaring melodies."
     },

@@ -16,7 +16,7 @@
 import { common } from '@kit.AbilityKit';
 import { resourceManager } from '@kit.LocalizationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { SongItem } from './SongData';
+import { SongItem } from 'musicbasic';
 import Logger from '../utils/LoggerAdapter';
 
 export default class SongItemBuilder {

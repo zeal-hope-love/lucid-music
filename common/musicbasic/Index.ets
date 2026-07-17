@@ -39,6 +39,7 @@ export { TabItem } from './src/main/ets/model/TabItem';
 export { SongRow } from './src/main/ets/data/SongRow';
 export { PlaylistRow } from './src/main/ets/data/PlaylistRow';
 export { RecommendFeedKind, RecommendFeedRow } from './src/main/ets/data/RecommendFeedRow';
+export { MusichallPlaylistItem, TagFilterItem, TagFilterGroup } from './src/main/ets/data/MusichallPlaylistItem';
 export { MusicMemoryStore } from './src/main/ets/db/MusicMemoryStore';
 export { MusicDbApi } from './src/main/ets/util/MusicDbApi';
 
@@ -87,6 +88,7 @@ export { AreaWithHdsTabBar } from './src/main/ets/components/floating/AreaWithHd
 export { LucidTabBar } from './src/main/ets/components/tabbar/LucidTabBar';
 export { MiniPlayerBar } from './src/main/ets/components/miniplayer/MiniPlayerBar';
 export { SearchInputArea } from './src/main/ets/components/search/SearchInputArea';
+export { SongListPage, SongListParam } from './src/main/ets/components/SongListPage';
 
 // New: 平台常量
 export { Platform, PlatformLabels, PlatformColors } from './src/main/ets/constants/Platform';
