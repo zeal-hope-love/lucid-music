@@ -1,7 +1,9 @@
 /*
  * Lucid Music - 歌单区域组件
  * 布局：切换按钮（自建歌单 | 收藏歌单）+ 歌单列表（封面 + 歌单名 + 数量）
+ * 功能：左滑删除（仅自建歌单）
  */
+import { promptAction } from '@kit.ArkUI'
 import { AppStorageV2 } from '@kit.ArkUI'
 import {
   AppStorageKeys, CurrentTabState, MusicDbApi, PlaylistRow, RouterUrlConstants, SongListParam
@@ -16,6 +18,8 @@ export struct PlaylistSection {
     AppStorageV2.connect(CurrentTabState, AppStorageKeys.CURRENT_TAB_STATE, () => new CurrentTabState())!
   /** playlistId → 第一首歌封面 Resource */
   @Local coverMap: Map<number, Resource> = new Map()
+  /** 待删除的歌单 ID（用于左滑删除） */
+  @Local pendingDeleteId: number = 0
 
   aboutToAppear(): void {
     this.loadPlaylists()
@@ -64,34 +68,81 @@ export struct PlaylistSection {
     return this.coverMap.get(playlistId) ?? $r('app.media.ic_avatar1')
   }
 
+  // ==================== 左滑删除 ====================
+
+  private async onDeletePlaylist(playlistId: number): Promise<void> {
+    const api = MusicDbApi.getInstance()
+    let success = false
+    
+    // 根据当前歌单类型调用不同的删除方法
+    if (this.currentType === 0) {
+      // 自建歌单：删除歌单
+      success = api.deleteOwnPlaylist(playlistId)
+    } else {
+      // 收藏歌单：取消收藏
+      success = api.removeCollectedPlaylist(playlistId)
+    }
+    
+    if (success) {
+      promptAction.showToast({ message: '已删除', duration: 2000 })
+      this.loadPlaylists()
+    }
+  }
+
+  @Builder
+  swipeTrashBuilder(): void {
+    Button({ type: ButtonType.Circle }) {
+      SymbolGlyph($r('sys.symbol.trash_fill'))
+        .fontSize(20)
+        .fontColor(['#FF4444'])
+    }
+    .buttonStyle(ButtonStyleMode.NORMAL)
+    .width(44)
+    .height(44)
+    .margin({ right: 12 })
+    .onClick(() => { this.onDeletePlaylist(this.pendingDeleteId) })
+  }
+
   build() {
     Column() {
       // === 切换按钮：自建歌单 | 收藏歌单 ===
       Row({ space: 0 }) {
-        Text('自建歌单')
-          .fontSize(16)
-          .fontWeight(this.currentType === 0 ? FontWeight.Bold : FontWeight.Normal)
-          .fontColor(this.currentType === 0
-            ? $r('sys.color.ohos_id_color_text_primary')
-            : $r('sys.color.ohos_id_color_text_secondary'))
-          .onClick(() => { this.onToggle(0) })
+        // 自建歌单按钮
+        Column() {
+          Text('自建歌单')
+            .fontSize(17)
+            .fontWeight(this.currentType === 0 ? FontWeight.Bold : FontWeight.Normal)
+            .fontColor(this.currentType === 0
+              ? $r('sys.color.ohos_id_color_text_primary')
+              : $r('sys.color.ohos_id_color_text_secondary'))
+        }
+        .padding({ left: 12, right: 12, top: 4, bottom: 4 })
+        .borderRadius(8)
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 1.0 })
+        .onClick(() => { this.onToggle(0) })
 
-        // 选中分隔符：两个文字之间的浅色竖线
+        // 分隔竖线
         Text('|')
-          .fontSize(14)
+          .fontSize(16)
           .fontColor($r('sys.color.ohos_id_color_list_separator'))
           .margin({ left: 12, right: 12 })
 
-        Text('收藏歌单')
-          .fontSize(16)
-          .fontWeight(this.currentType === 1 ? FontWeight.Bold : FontWeight.Normal)
-          .fontColor(this.currentType === 1
-            ? $r('sys.color.ohos_id_color_text_primary')
-            : $r('sys.color.ohos_id_color_text_secondary'))
-          .onClick(() => { this.onToggle(1) })
+        // 收藏歌单按钮
+        Column() {
+          Text('收藏歌单')
+            .fontSize(17)
+            .fontWeight(this.currentType === 1 ? FontWeight.Bold : FontWeight.Normal)
+            .fontColor(this.currentType === 1
+              ? $r('sys.color.ohos_id_color_text_primary')
+              : $r('sys.color.ohos_id_color_text_secondary'))
+        }
+        .padding({ left: 12, right: 12, top: 4, bottom: 4 })
+        .borderRadius(8)
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 1.0 })
+        .onClick(() => { this.onToggle(1) })
       }
       .width('100%')
-      .padding({ left: 16, top: 18, right: 16, bottom: 18 })
+      .padding({ left: 16, top: 16, right: 16, bottom: 10 })
 
       Divider()
         .width('100%')
@@ -146,7 +197,19 @@ export struct PlaylistSection {
                 this.onPlaylistTap(playlist)
               })
             }
-          })
+            // 左滑删除（自建歌单和收藏歌单都支持）
+            .swipeAction({
+              end: {
+                builder: () => {
+                  // 使用局部变量捕获当前 playlist，避免闭包捕获错误
+                  const currentPlaylist = playlist
+                  this.pendingDeleteId = currentPlaylist.playlistId
+                  this.swipeTrashBuilder()
+                }
+              },
+              edgeEffect: SwipeEdgeEffect.Spring
+            })
+          }, (playlist: PlaylistRow) => playlist.playlistId.toString())
         }
         .width('100%')
         .divider({ strokeWidth: 0.5, color: '#1A000000', startMargin: 66, endMargin: 12 })

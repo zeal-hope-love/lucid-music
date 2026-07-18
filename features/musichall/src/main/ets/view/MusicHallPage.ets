@@ -78,14 +78,17 @@ export struct MusicHallPage {
 
   build() {
     Column() {
-      // === 标题（与首页对齐，滑动渐隐） ===
-      Row() {
-        Text('音乐厅')
-          .fontSize(28)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.ohos_id_color_text_primary'))
+      // === 标题区（滑动渐隐） ===
+      Column() {
+        Row() {
+          Text('音乐厅')
+            .fontSize(28)
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('sys.color.ohos_id_color_text_primary'))
+        }
+        .width('90%')
       }
-      .width('90%')
+      .width('100%')
       .margin({ top: 64 })
       .opacity(this.titleOpacity)
       .height(this.titleSpace)
@@ -103,6 +106,7 @@ export struct MusicHallPage {
           this.isTagSheetVisible = true
         }
       })
+        .padding({ left: 18 })
 
       // === 3 列歌单网格 ===
       Grid() {
@@ -115,7 +119,8 @@ export struct MusicHallPage {
       .columnsTemplate('1fr 1fr 1fr')
       .columnsGap(10)
       .rowsGap(16)
-      .width('90%')
+      .width('100%')
+      .padding({ left: 18, right: 18 })
       .layoutWeight(1)
       .scrollBar(BarState.Off)
       .onScrollIndex((first: number): void => {

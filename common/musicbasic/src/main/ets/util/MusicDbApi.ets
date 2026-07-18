@@ -175,6 +175,16 @@ export class MusicDbApi {
     return this.store.playlists.filter((p) => p.playlistType === 1);
   }
 
+  /** Deletes an own playlist by id and returns true if found and deleted. */
+  public deleteOwnPlaylist(id: number): boolean {
+    return this.store.deleteOwnPlaylist(id);
+  }
+
+  /** Removes a playlist from collected list and returns true if found. */
+  public removeCollectedPlaylist(id: number): boolean {
+    return this.store.removeCollectedPlaylist(id);
+  }
+
   // ==================== MusicHall 歌单展示 ====================
 
   /** @returns MusicHall 歌单展示列表（封面、播放量等 UI 数据）。 */

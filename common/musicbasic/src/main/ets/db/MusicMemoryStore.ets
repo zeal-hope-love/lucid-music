@@ -208,6 +208,33 @@ export class MusicMemoryStore {
     return this.collectedPlaylistIds.indexOf(id) !== -1;
   }
 
+  /** Deletes an own playlist by id and returns true if found and deleted. */
+  public deleteOwnPlaylist(id: number): boolean {
+    const idx = this.playlists.findIndex((p) => p.playlistId === id && p.playlistType === 0);
+    if (idx !== -1) {
+      this.playlists.splice(idx, 1);
+      return true;
+    }
+    return false;
+  }
+
+  /** Removes a collected playlist from both playlists array and collectedPlaylistIds. */
+  public removeCollectedPlaylist(id: number): boolean {
+    // 从 collectedPlaylistIds 中移除
+    const collectedIdx = this.collectedPlaylistIds.indexOf(id);
+    if (collectedIdx !== -1) {
+      this.collectedPlaylistIds.splice(collectedIdx, 1);
+    }
+    
+    // 从 playlists 数组中移除该歌单
+    const playlistIdx = this.playlists.findIndex((p) => p.playlistId === id && p.playlistType === 1);
+    if (playlistIdx !== -1) {
+      this.playlists.splice(playlistIdx, 1);
+      return true;
+    }
+    return false;
+  }
+
   // ==================== 种子数据 ====================
 
   /** Seeds own + collected demo playlists. */
