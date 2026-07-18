@@ -75,7 +75,6 @@ export struct MusicInfoComponent {
           this.MusicInfo()
         }
         .width(StyleConstants.FULL_WIDTH)
-        .clip(false)
       }
     }
   }
@@ -146,7 +145,7 @@ export struct MusicInfoComponent {
             $r('app.float.title_font_play_md') : $r('app.float.title_font_play'))
           .fontColor(Color.White)
           .opacity(0.86)
-          .fontWeight(FontWeight.Bold)
+          .fontWeight(PlayerConstants.FONT_WEIGHT_700)
           .fontFamily(PlayerConstants.FONT_FAMILY_BOLD)
           .constraintSize({ minWidth: 200 })
           .geometryTransition('PLAYBACK_TITLE_TRANSITION', { follow: this.follow })
@@ -157,9 +156,9 @@ export struct MusicInfoComponent {
           .fontSize(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_MD && !this.isFoldFull ?
             $r('app.float.title_font_play') : $r('app.float.font_fourteen'))
           .fontColor($r('app.color.play_text_color'))
-          .fontFamily(PlayerConstants.FONT_FAMILY_BLACK)
+          .fontFamily(PlayerConstants.FONT_FAMILY_MEDIUM)
           .margin({ top: $r('app.float.music_text_margin_top') })
-          .fontWeight(FontWeight.Regular)
+          .fontWeight(PlayerConstants.FONT_WEIGHT_500)
           .constraintSize({ minWidth: 200 })
           .geometryTransition('PLAYBACK_SINGER_TRANSITION', { follow: this.follow })
       }

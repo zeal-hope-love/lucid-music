@@ -11,22 +11,21 @@ import { TAG, PlayUrlResult, WeapiResult, eapiEncrypt, weapiEncrypt, formatDurat
 export class WyMusicApi {
   // ===== 搜索 =====
   static async search(keyword: string, page: number, limit: number): Promise<SearchResultItem[]> {
-    // 主路径：legacy 未加密 API
-    let results = await WyMusicApi.searchLegacy(keyword, page, limit)
-    if (results.length > 0) {
-      Logger.info(TAG, `wy search: ${results.length} results for "${keyword}"`)
-      return await WyMusicApi.fillMissingCovers(results)
-    }
-    // 兜底：eapi
+    // 主路径：eapi（含 privilege 音质数据，对齐 lx-music）
     const body = await WyMusicApi.eapiRequest('/api/search/song/list/page', {
       keyword: keyword, needCorrect: '1', channel: 'typing',
       offset: limit * (page - 1), scene: 'normal', total: page == 1, limit: limit
     })
     if (body && body['code'] === 200 && body['data']) {
       const data = body['data'] as Record<string, Object>
-      return WyMusicApi.mapList(data['resources'] as Record<string, Object>[] || [])
+      const results = WyMusicApi.mapList(data['resources'] as Record<string, Object>[] || [])
+      Logger.info(TAG, `wy search eapi: ${results.length} results for "${keyword}"`)
+      if (results.length > 0) { return results }
     }
-    return []
+    // 兜底：legacy
+    const results = await WyMusicApi.searchLegacy(keyword, page, limit)
+    Logger.info(TAG, `wy search legacy: ${results.length} results for "${keyword}"`)
+    return await WyMusicApi.fillMissingCovers(results)
   }
 
   private static async searchLegacy(keyword: string, page: number, limit: number): Promise<SearchResultItem[]> {
@@ -62,7 +61,7 @@ export class WyMusicApi {
       const privilege = item['privilege'] as Record<string, Object>
       const maxbr = privilege ? (privilege['maxbr'] as number) || 0 : 0
       const maxBrLevel = privilege ? (privilege['maxBrLevel'] as string) || '' : ''
-      result.quality = maxBrLevel === 'hires' ? '24bit' : maxbr >= 999000 ? 'SQ' : maxbr >= 320000 ? 'HQ' : '标准'
+      result.quality = WyMusicApi.resolveQuality(maxBrLevel, maxbr, item)
       result.rawFields = item
       r.push(result)
     }
@@ -92,11 +91,36 @@ export class WyMusicApi {
       const privilege = item['privilege'] as Record<string, Object>
       const maxbr = privilege ? (privilege['maxbr'] as number) || 0 : 0
       const maxBrLevel = privilege ? (privilege['maxBrLevel'] as string) || '' : ''
-      result.quality = maxBrLevel === 'hires' ? '24bit' : maxbr >= 999000 ? 'SQ' : maxbr >= 320000 ? 'HQ' : '标准'
+      result.quality = WyMusicApi.resolveQuality(maxBrLevel, maxbr, item)
       result.rawFields = item
       r.push(result)
     }
     return r
+  }
+
+  /**
+   * 解析网易云歌曲音质
+   * 优先使用 privilege.maxBrLevel + maxbr，不可用时 fallback 到 h/m/l 品质子对象的 bitrate
+   */
+  private static resolveQuality(maxBrLevel: string, maxbr: number, item: Record<string, Object>): string {
+    if (maxBrLevel === 'hires') { return '24bit' }
+    if (maxbr >= 999000) { return 'SQ' }
+    if (maxbr >= 320000) { return 'HQ' }
+    // privilege 无法判定时，从 h/m/l 品质子对象获取 bitrate 作为 fallback
+    if (maxbr === 0 && !maxBrLevel) {
+      const hItem = item['h'] as Record<string, Object>
+      const mItem = item['m'] as Record<string, Object>
+      const lItem = item['l'] as Record<string, Object>
+      const hBr = hItem ? (hItem['br'] as number) || 0 : 0
+      const mBr = mItem ? (mItem['br'] as number) || 0 : 0
+      const lBr = lItem ? (lItem['br'] as number) || 0 : 0
+      const bestBr = Math.max(hBr, mBr, lBr)
+      Logger.info(TAG, `wy quality fallback: title=${item['name']}, hasPrivilege=${!!item['privilege']}, maxbr=${maxbr}, maxBrLevel=${maxBrLevel}, hBr=${hBr}, mBr=${mBr}, lBr=${lBr}, bestBr=${bestBr}`)
+      if (bestBr >= 999000) { return 'SQ' }
+      if (bestBr >= 320000) { return 'HQ' }
+      return '标准'
+    }
+    return '标准'
   }
 
   private static async fillMissingCovers(results: SearchResultItem[]): Promise<SearchResultItem[]> {

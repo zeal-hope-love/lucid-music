@@ -38,6 +38,24 @@ export interface QQHotKeyParam { search_id: string; uin: number }
 export interface QQHotKeyModule { method: string; module: string; param: QQHotKeyParam }
 export interface QQHotKeyBody { comm: QQHotKeyComm; hotkey: QQHotKeyModule }
 
+/** QQ 搜索请求（DoSearchForQQMusicMobile） */
+export interface QQSearchComm {
+  ct: string; cv: string; v: string; tmeAppID: string
+  phonetype: string; deviceScore: string; devicelevel: string; newdevicelevel: string
+  rom: string; os_ver: string
+  OpenUDID: string; OpenUDID2: string; QIMEI36: string
+  udid: string; chid: string; aid: string; oaid: string; taid: string; tid: string
+  wid: string; uid: string; sid: string
+  modeSwitch: string; teenMode: string; ui_mode: string; nettype: string; v4ip: string
+}
+export interface QQSearchParam {
+  search_type: number; searchid: string; query: string
+  page_num: number; num_per_page: number; highlight: number
+  nqc_flag: number; multi_zhida: number; cat: number; grp: number; sin: number; sem: number
+}
+export interface QQSearchReqModule { module: string; method: string; param: QQSearchParam }
+export interface QQSearchBody { comm: QQSearchComm; req: QQSearchReqModule }
+
 // ===== eapi 加密 =====
 const EAPI_KEY = 'e82ckenh8dichen8'
 
@@ -143,6 +161,33 @@ export async function weapiEncrypt(data: ESObject): Promise<WeapiResult> {
   rsaInput.set(rev, 128 - rev.length)
   const rsaOut = await rsaEncryptNoPadding(rsaInput)
   return { params: second, encSecKey: bytesToLowerHex(rsaOut) }
+}
+
+// ===== SHA1 & zzcSign（QQ音乐签名） =====
+export async function sha1Hex(input: string): Promise<string> {
+  const md = cryptoFramework.createMd('SHA1')
+  await md.update({ data: new Uint8Array(buffer.from(input, 'utf-8').buffer) })
+  const r = await md.digest()
+  let h = ''
+  for (const b of r.data) { h += ((b as number) < 16 ? '0' : '') + ((b as number) & 0xff).toString(16) }
+  return h
+}
+
+const ZZC_P1 = [23, 14, 6, 36, 16, 40, 7, 19]
+const ZZC_P2 = [16, 1, 32, 12, 19, 27, 8, 5]
+const ZZC_SC = [89, 39, 179, 150, 218, 82, 58, 252, 177, 52, 186, 123, 120, 64, 242, 133, 143, 161, 121, 179]
+
+export async function zzcSign(text: string): Promise<string> {
+  const hash = await sha1Hex(text)
+  const p1 = ZZC_P1.map(i => hash.charAt(i)).join('')
+  const p2 = ZZC_P2.map(i => hash.charAt(i)).join('')
+  const p3: number[] = []
+  for (let i = 0; i < ZZC_SC.length; i++) {
+    p3.push(ZZC_SC[i] ^ parseInt(hash.substring(i * 2, i * 2 + 2), 16))
+  }
+  const h = new util.Base64Helper()
+  const b64 = h.encodeToStringSync(new Uint8Array(p3)).replace(/[/+=]/g, '')
+  return `zzc${p1}${b64}${p2}`.toLowerCase()
 }
 
 // ===== 通用工具 =====

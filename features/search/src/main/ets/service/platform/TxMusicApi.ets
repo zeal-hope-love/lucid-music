@@ -2,39 +2,77 @@
  * TxMusicApi - QQ音乐平台 API
  */
 import { http } from '@kit.NetworkKit'
-import { util } from '@kit.ArkTS'
 import { SearchResultItem } from '../../model/SearchResultItem'
 import { SuggestionItem, SuggestionType } from '../../model/SuggestionItem'
 import { Logger } from 'musicbasic'
-import { TAG, PlayUrlResult, QQVkeyParam, QQVkeyModule, QQVkeyBody, QQHotKeyBody, formatDuration, decodeBase64Lyric } from '../MusicApiUtils'
+import { TAG, PlayUrlResult, QQVkeyParam, QQVkeyModule, QQVkeyBody, QQHotKeyBody, QQSearchBody, formatDuration, decodeBase64Lyric, zzcSign } from '../MusicApiUtils'
 
 export class TxMusicApi {
   // ===== 搜索 =====
   static async search(keyword: string, page: number, limit: number): Promise<SearchResultItem[]> {
     try {
-      const url = `https://c.y.qq.com/soso/fcgi-bin/client_search_cp?format=json&n=${limit}&p=${page}&w=${encodeURIComponent(keyword)}&cr=1&g_tk=5381`
-      const resp = await http.createHttp().request(url, { method: http.RequestMethod.GET, header: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://y.qq.com' }, connectTimeout: 10000, readTimeout: 10000 })
-      if (resp.responseCode !== 200) { return [] }
+      const reqData: QQSearchBody = {
+        comm: { ct: '11', cv: '14090508', v: '14090508', tmeAppID: 'qqmusic',
+          phonetype: 'EBG-AN10', deviceScore: '553.47', devicelevel: '50', newdevicelevel: '20',
+          rom: 'HuaWei/EMOTION/EmotionUI_14.2.0', os_ver: '12', OpenUDID: '0', OpenUDID2: '0',
+          QIMEI36: '0', udid: '0', chid: '0', aid: '0', oaid: '0', taid: '0', tid: '0',
+          wid: '0', uid: '0', sid: '0', modeSwitch: '6', teenMode: '0', ui_mode: '2', nettype: '1020', v4ip: '' },
+        req: { module: 'music.search.SearchCgiService', method: 'DoSearchForQQMusicMobile',
+          param: { search_type: 0, searchid: Math.random().toString().slice(2), query: keyword,
+            page_num: page, num_per_page: limit, highlight: 0, nqc_flag: 0,
+            multi_zhida: 0, cat: 2, grp: 1, sin: 0, sem: 0 } }
+      }
+      const jsonStr = JSON.stringify(reqData)
+      const sign = await zzcSign(jsonStr)
+      const resp = await http.createHttp().request(`https://u.y.qq.com/cgi-bin/musics.fcg?sign=${sign}`, {
+        method: http.RequestMethod.POST,
+        header: { 'User-Agent': 'QQMusic 14090508(android 12)', 'Content-Type': 'application/json' },
+        extraData: jsonStr, connectTimeout: 10000, readTimeout: 10000
+      })
+      if (resp.responseCode !== 200) { Logger.warn(TAG, `tx search http err: ${resp.responseCode}`); return [] }
       const body: Record<string, Object> = JSON.parse(resp.result as string) as Record<string, Object>
-      if (!body || body['code'] !== 0 || !body['data']) { return [] }
-      const song = (body['data'] as Record<string, Object>)['song'] as Record<string, Object>
-      return TxMusicApi.mapList((song ? song['list'] : undefined) as object[] || [])
+      if (!body || body['code'] !== 0 || !body['req']) { Logger.warn(TAG, `tx search body err: code=${body?.['code']}`); return [] }
+      const req = body['req'] as Record<string, Object>
+      if (req['code'] !== 0 || !req['data']) { Logger.warn(TAG, `tx search req err: code=${req['code']}`); return [] }
+      const data = req['data'] as Record<string, Object>
+      const songs: Record<string, Object>[] = (data['body'] as Record<string, Object>)?.['item_song'] as Record<string, Object>[]
+      return songs ? TxMusicApi.mapList(songs) : []
     } catch (e) { Logger.error(TAG, `qq search error: ${JSON.stringify(e)}`); return [] }
   }
 
-  static mapList(rawList: object[]): SearchResultItem[] {
+  private static mapList(rawList: object[]): SearchResultItem[] {
     const results: SearchResultItem[] = []
     if (!Array.isArray(rawList)) { return results }
     for (const item of rawList as Record<string, Object>[]) {
+      const file = item['file'] as Record<string, Object>
+      if (!file || !file['media_mid']) { continue }
       const result = new SearchResultItem()
-      result.title = (item['songname'] as string) || ''; result.singer = (item['singer'] as Record<string, Object>[])?.map(s => s['name'] as string).join('/') || ''
-      result.album = (item['albumname'] as string) || ''; result.songId = (item['songmid'] as string) || (item['songid'] as string) || ''
-      result.source = 'tx'; result.duration = formatDuration((item['interval'] as number) || 0)
-      const albumMid: string = (item['albummid'] as string) || (item['album_mid'] as string) || ''
-      if (albumMid && albumMid !== '空') { result.coverUrl = `https://y.gtimg.cn/music/photo_new/T002R500x500M000${albumMid}.jpg` }
+      result.title = (item['title'] as string) || ''
+      const singers = item['singer'] as Record<string, Object>[]
+      result.singer = singers ? singers.map(s => s['name'] as string).join('/') : ''
+      const album = item['album'] as Record<string, Object>
+      result.album = album ? (album['name'] as string) || '' : ''
+      result.songId = (item['mid'] as string) || String((item['id'] as number) || 0)
+      result.source = 'tx'
+      result.duration = formatDuration((item['interval'] as number) || 0)
+      const albumMid: string = album ? (album['mid'] as string) || '' : ''
+      if (albumMid && albumMid !== '空') {
+        result.coverUrl = `https://y.gtimg.cn/music/photo_new/T002R500x500M000${albumMid}.jpg`
+      } else if (singers && singers.length > 0) {
+        const singerMid = singers[0]['mid'] as string
+        if (singerMid) { result.coverUrl = `https://y.gtimg.cn/music/photo_new/T001R500x500M000${singerMid}.jpg` }
+      }
       result.cover = result.coverUrl
-      result.quality = (item['sizehr'] as number) > 0 ? '24bit' : (item['sizesq'] as number) > 0 ? 'SQ' : (item['size320'] as number) > 0 ? 'HQ' : '标准'
-      result.rawFields = item; results.push(result)
+      // 音质：file 子对象各文件大小 != 0 判定（对齐 lx-music）
+      if ((file['size_hires'] as number) > 0) { result.quality = '24bit' }
+      else if ((file['size_flac'] as number) > 0) { result.quality = 'SQ' }
+      else if ((file['size_320mp3'] as number) > 0) { result.quality = 'HQ' }
+      else { result.quality = '标准' }
+      // rawFields 兼容 getPlayUrl（需要 songmid/albummid 字段）
+      result.rawFields = item
+      result.rawFields['songmid'] = result.songId
+      if (albumMid) { result.rawFields['albummid'] = albumMid }
+      results.push(result)
     }
     return results
   }

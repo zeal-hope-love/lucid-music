@@ -15,6 +15,7 @@
 
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
+import { curves } from '@kit.ArkUI';
 import { PlayerConstants } from '../constants/PlayerConstants';
 import { BreakpointType } from '../utils/BreakpointSystem';
 import { AVSessionController } from '../controller/AVSessionController';
@@ -43,11 +44,18 @@ export struct LyricsComponent {
   @Link isTablet: boolean;
   @Prop follow: boolean = false;
   @State lyricCoverFailed: boolean = false;
+  @State lyricsSlidIn: boolean = false;
   private context: common.UIAbilityContext | undefined = AppStorage.get('context');
 
   aboutToAppear() {
+    this.lyricsSlidIn = false;
     this.getLrcEntryList();
     this.syncFavoriteState();
+
+    // 歌词文字延迟弹入："先滑再看"的跟随效果
+    setTimeout(() => {
+      this.lyricsSlidIn = true;
+    }, 100)
   }
 
   syncFavoriteState(): void {
@@ -104,7 +112,7 @@ export struct LyricsComponent {
                   Image(this.songList[this.selectIndex].coverUrl)
                     .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
                       $r('app.float.label_width_sm') : $r('app.float.label_width'))
-                    .borderRadius(6)
+                    .borderRadius($r('app.float.cover_radius_label'))
                     .shadow({
                       radius: $r('app.float.shadow_radius'),
                       color: $r('app.color.shadow_color'),
@@ -118,13 +126,13 @@ export struct LyricsComponent {
                   Image($r('app.media.ic_music_symbol'))
                     .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
                       $r('app.float.label_width_sm') : $r('app.float.label_width'))
-                    .borderRadius(6)
+                    .borderRadius($r('app.float.cover_radius_label'))
                     .margin({ right: $r('app.float.label_margin_right') })
                 } else if (this.songList[this.selectIndex].label) {
                   Image(this.songList[this.selectIndex].label)
                     .width(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ?
                       $r('app.float.label_width_sm') : $r('app.float.label_width'))
-                    .borderRadius(6)
+                    .borderRadius($r('app.float.cover_radius_label'))
                     .shadow({
                       radius: $r('app.float.shadow_radius'),
                       color: $r('app.color.shadow_color'),
@@ -144,14 +152,14 @@ export struct LyricsComponent {
             }
             Column() {
               Text(this.songList[this.selectIndex].title)
-                .fontSize($r('app.float.title_font_play'))
+                .fontSize(18)
                 .fontColor(Color.White)
                 .fontWeight(PlayerConstants.FONT_WEIGHT_700)
                 .fontFamily(PlayerConstants.FONT_FAMILY_BOLD)
                 .constraintSize({ minWidth: 200 })
                 .geometryTransition('PLAYBACK_TITLE_TRANSITION', { follow: this.follow })
               Text(this.songList[this.selectIndex].singer)
-                .fontSize($r('app.float.font_fourteen'))
+                .fontSize($r('app.float.singer_title_md'))
                 .fontColor(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ?
                   $r('app.color.singer_text') : $r('sys.color.ohos_id_color_text_hint_contrary'))
                 .fontWeight(PlayerConstants.FONT_WEIGHT_500)
@@ -180,7 +188,7 @@ export struct LyricsComponent {
         .justifyContent(FlexAlign.SpaceBetween)
         .alignItems(VerticalAlign.Center)
         .margin({
-          top: 16,
+          top: 32,
           bottom: $r('app.float.info_margin_bottom')
         })
       }
@@ -236,6 +244,9 @@ export struct LyricsComponent {
                   lyricTopPosition: LyricTopPosition.Middle
                 })
                   .layoutWeight(1)
+                  .translate({ x: this.lyricsSlidIn ? 0 : '25%' })
+                  .opacity(this.lyricsSlidIn ? 1 : 0)
+                  .animation({ curve: curves.springMotion(0.45, 0.78) })
               }
             }
           }
@@ -249,6 +260,9 @@ export struct LyricsComponent {
           lyricTopPosition: LyricTopPosition.Middle
         })
           .layoutWeight(1)
+          .translate({ x: this.lyricsSlidIn ? 0 : '25%' })
+          .opacity(this.lyricsSlidIn ? 1 : 0)
+          .animation({ curve: curves.springMotion(0.45, 0.78) })
       }
 
       // （歌词底部 icon 已移除，歌词区域撑满）

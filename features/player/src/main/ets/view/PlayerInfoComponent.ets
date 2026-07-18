@@ -189,22 +189,13 @@ export struct PlayerInfoComponent {
             .justifyContent(FlexAlign.Center)
             .margin({ top: 16 })
 
-            // === 内容区（if/if + transition + geometryTransition） ===
+            // === 内容区（if/else + geometryTransition 独立驱动） ===
             Stack() {
               if (!this.showLyrics) {
                 MusicInfoComponent({ follow: !this.showLyrics || this.playbackEntering })
-                  .transition(TransitionEffect.IDENTITY)
                   .margin({ bottom: $r('app.float.music_component_bottom') })
-              }
-
-              if (this.showLyrics) {
+              } else {
                 LyricsComponent({ isTablet: this.isTabletFalse, follow: this.showLyrics && !this.playbackEntering })
-                  .transition(
-                    TransitionEffect.asymmetric(
-                      TransitionEffect.translate({ x: 400 }).animation({ curve: curves.springMotion() }),
-                      TransitionEffect.translate({ x: 400 }).animation({ duration: 400, curve: Curve.EaseInOut })
-                    )
-                  )
                   .margin({ top: $r('app.float.margin_lyric') })
               }
             }
@@ -213,12 +204,12 @@ export struct PlayerInfoComponent {
               PanGesture({ direction: PanDirection.Horizontal, distance: 20 })
                 .onActionEnd((event: GestureEvent) => {
                   if (event.offsetX < -20 && !this.showLyrics) {
-                    this.getUIContext()?.animateTo({ curve: curves.springMotion() }, () => {
+                    this.getUIContext()?.animateTo({ curve: curves.springMotion(0.55, 0.78) }, () => {
                       this.showLyrics = true;
                     })
                     this.startControlTimer();
                   } else if (event.offsetX > 20 && this.showLyrics) {
-                    this.getUIContext()?.animateTo({ curve: curves.springMotion() }, () => {
+                    this.getUIContext()?.animateTo({ curve: curves.springMotion(0.55, 0.78) }, () => {
                       this.showLyrics = false;
                     })
                     this.resetControlTimer();

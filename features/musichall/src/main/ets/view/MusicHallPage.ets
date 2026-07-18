@@ -103,7 +103,6 @@ export struct MusicHallPage {
           this.isTagSheetVisible = true
         }
       })
-        .width('90%')
 
       // === 3 列歌单网格 ===
       Grid() {

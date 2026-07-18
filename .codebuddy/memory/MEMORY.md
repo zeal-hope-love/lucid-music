@@ -24,3 +24,9 @@
 - UI 组件：SourceTabBar (平台切换) + PlaylistCard (歌单卡片) + TagFilterSheet (标签筛选)
 - 吸顶方案：Column 布局 + Grid.onScrollIndex 检测滚动，标题 opacity/height 动画渐隐
 - 歌单详情：点击 PlaylistCard → push PlaylistDetailPage → SongListPage({ playlistId })
+
+## 播放详情页一镜到底架构 (2026-07-18)
+- 内部歌词↔封面切换：PlayerInfoComponent 使用 **if/else** + geometryTransition 独立驱动（所有元素：封面/歌名/歌手/收藏）
+- 不再使用 TransitionEffect（之前 if/if + IDENTITY/translate 会与 geometryTransition 冲突导致动画末尾属性突变）
+- Navigation 入场/退场一镜到底：playbackEntering 控制 follow，MiniPlayerBar(follow=false) ↔ MusicInfoComponent(follow=playbackEntering)
+- 关键：geometryTransition 共享元素在源和目标组件间属性需一致

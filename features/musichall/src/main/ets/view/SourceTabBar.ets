@@ -18,8 +18,8 @@ const CAPSULE_STYLE: ChipItemStyle = {
 
 const CHIP_SPACE: ChipGroupSpaceOptions = {
   itemSpace: 8,
-  startSpace: 0,
-  endSpace: 0
+  startSpace: 16,
+  endSpace: 32
 }
 
 /** IconGroupSuffix 的包装组件（参考 CapsuleStyle ChipGroupSuffixComp） */
@@ -38,6 +38,7 @@ struct FilterSuffixComp {
           })
       ]
     })
+      .margin({ right: 16 })
   }
 }
 
