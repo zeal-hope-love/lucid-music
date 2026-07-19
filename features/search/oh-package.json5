@@ -7,6 +7,5 @@
   license: '',
   dependencies: {
     musicbasic: 'file:../../common/musicbasic',
-    player: 'file:../player',
   },
 }

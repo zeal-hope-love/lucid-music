@@ -1,0 +1,665 @@
+> hvigor [32mUP-TO-DATE :entry:default@PreBuild...  [39m
+> hvigor [32mUP-TO-DATE :musicbasic:default@PreBuild...  [39m
+> hvigor [32mUP-TO-DATE :jsaudioengine:default@PreBuild...  [39m
+> hvigor [32mUP-TO-DATE :player:default@PreBuild...  [39m
+> hvigor [32mUP-TO-DATE :search:default@PreBuild...  [39m
+> hvigor [32mUP-TO-DATE :home:default@PreBuild...  [39m
+> hvigor [32mUP-TO-DATE :musichall:default@PreBuild...  [39m
+> hvigor [32mUP-TO-DATE :mine:default@PreBuild...  [39m
+> hvigor [32mFinished :entry:default@CreateModuleInfo... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@GenerateMetadata...  [39m
+> hvigor [32mFinished :entry:default@PreCheckSyscap... after 1 ms [39m
+> hvigor [32mFinished :entry:default@GeneratePkgSdkInfo... after 24 ms [39m
+> hvigor [32mFinished :entry:default@ProcessIntegratedHsp... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :jsaudioengine:default@CreateHarBuildProfile...  [39m
+> hvigor [32mFinished :jsaudioengine:default@ConfigureCmake... after 118 ms [39m
+> hvigor [32mUP-TO-DATE :jsaudioengine:default@MergeProfile...  [39m
+> hvigor [32mFinished :entry:default@SyscapTransform... after 6 ms [39m
+> hvigor [32mUP-TO-DATE :musicbasic:default@CreateHarBuildProfile...  [39m
+> hvigor [32mFinished :jsaudioengine:default@BuildNativeWithCmake... after 38 ms [39m
+> hvigor [32mUP-TO-DATE :musicbasic:default@MergeProfile...  [39m
+> hvigor [32mUP-TO-DATE :player:default@CreateHarBuildProfile...  [39m
+> hvigor [32mUP-TO-DATE :search:default@CreateHarBuildProfile...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@GeneratePkgContextInfo...  [39m
+> hvigor [32mFinished :musicbasic:default@ConfigureCmake... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :player:default@MergeProfile...  [39m
+> hvigor [32mUP-TO-DATE :search:default@MergeProfile...  [39m
+> hvigor [32mUP-TO-DATE :home:default@CreateHarBuildProfile...  [39m
+> hvigor [32mUP-TO-DATE :musichall:default@CreateHarBuildProfile...  [39m
+> hvigor [32mUP-TO-DATE :mine:default@CreateHarBuildProfile...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@ProcessRouterMap...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@ProcessShareConfig...  [39m
+> hvigor [32mFinished :entry:default@ProcessStartupConfig... after 4 ms [39m
+> hvigor [32mFinished :musicbasic:default@BuildNativeWithCmake... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :home:default@MergeProfile...  [39m
+> hvigor [32mUP-TO-DATE :musichall:default@MergeProfile...  [39m
+> hvigor [32mUP-TO-DATE :mine:default@MergeProfile...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@CreateBuildProfile...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@GenerateLoaderJson...  [39m
+> hvigor [32mFinished :player:default@ConfigureCmake... after 1 ms [39m
+> hvigor [32mFinished :search:default@ConfigureCmake... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@MergeProfile...  [39m
+> hvigor [32mFinished :player:default@BuildNativeWithCmake... after 1 ms [39m
+> hvigor [32mFinished :search:default@BuildNativeWithCmake... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@MakePackInfo...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@ProcessProfile...  [39m
+> hvigor [32mFinished :home:default@ConfigureCmake... after 1 ms [39m
+> hvigor [32mFinished :musichall:default@ConfigureCmake... after 1 ms [39m
+> hvigor [32mFinished :mine:default@ConfigureCmake... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@ProcessResource...  [39m
+> hvigor [32mFinished :home:default@BuildNativeWithCmake... after 1 ms [39m
+> hvigor [32mFinished :musichall:default@BuildNativeWithCmake... after 1 ms [39m
+> hvigor [32mFinished :mine:default@BuildNativeWithCmake... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@CompileResource...  [39m
+> hvigor [32mFinished :entry:default@ConfigureCmake... after 1 ms [39m
+> hvigor [32mFinished :entry:default@BuildJS... after 15 ms [39m
+> hvigor [32mFinished :entry:default@BuildNativeWithCmake... after 1 ms [39m
+> hvigor [32mFinished :jsaudioengine:default@BuildNativeWithNinja... after 67 ms [39m
+> hvigor [32mUP-TO-DATE :jsaudioengine:default@ProcessLibs...  [39m
+> hvigor [32mUP-TO-DATE :jsaudioengine:default@DoNativeStrip...  [39m
+> hvigor [32mFinished :musicbasic:default@BuildNativeWithNinja... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :musicbasic:default@ProcessLibs...  [39m
+> hvigor [32mUP-TO-DATE :musicbasic:default@DoNativeStrip...  [39m
+> hvigor [32mFinished :player:default@BuildNativeWithNinja... after 1 ms [39m
+> hvigor [32mFinished :search:default@BuildNativeWithNinja... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :player:default@ProcessLibs...  [39m
+> hvigor [32mUP-TO-DATE :search:default@ProcessLibs...  [39m
+> hvigor [32mUP-TO-DATE :player:default@DoNativeStrip...  [39m
+> hvigor [32mUP-TO-DATE :search:default@DoNativeStrip...  [39m
+> hvigor [32mFinished :home:default@BuildNativeWithNinja... after 1 ms [39m
+> hvigor [32mFinished :musichall:default@BuildNativeWithNinja... after 1 ms [39m
+> hvigor [32mFinished :mine:default@BuildNativeWithNinja... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :home:default@ProcessLibs...  [39m
+> hvigor [32mUP-TO-DATE :musichall:default@ProcessLibs...  [39m
+> hvigor [32mUP-TO-DATE :mine:default@ProcessLibs...  [39m
+> hvigor [32mUP-TO-DATE :home:default@DoNativeStrip...  [39m
+> hvigor [32mUP-TO-DATE :musichall:default@DoNativeStrip...  [39m
+> hvigor [32mUP-TO-DATE :mine:default@DoNativeStrip...  [39m
+> hvigor [32mFinished :entry:default@BuildNativeWithNinja... after 1 ms [39m
+> hvigor [32mUP-TO-DATE :entry:default@ProcessLibs...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@DoNativeStrip...  [39m
+> hvigor [32mUP-TO-DATE :entry:default@CacheNativeLibs...  [39m
+> hvigor [33mWARN: [33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:165:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:166:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:167:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:168:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:169:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:170:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:171:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:172:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:173:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:174:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:175:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:176:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:177:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:178:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/types.ets:179:3
+ Definite assignment assertions are not supported (arkts-no-definite-assignment)
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN: For details about ArkTS syntax errors, see FAQs[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceDb.ets:25:36
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceDb.ets:36:46
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceDb.ets:57:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceDb.ets:58:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceManager.ets:119:29
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceManager.ets:121:14
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceManager.ets:126:23
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceManager.ets:128:26
+ 'encode' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceManager.ets:129:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceManager.ets:130:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/service/AudioSourceManager.ets:279:40
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/js_audio_engine/src/main/ets/AudioEngine.ets:1:21
+ Currently module for 'libjsaudioengine.so' is not verified. If you're importing napi, its verification will be enabled in later SDK version. Please make sure the corresponding .d.ts file is provided and the napis are correctly declared.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/js_audio_engine/src/main/ets/AudioEngine.ets:389:39
+ 'decodeWithStream' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:63:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:64:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:65:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:74:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:76:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:78:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:79:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:80:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:120:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:121:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:122:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:124:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:125:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:131:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:132:32
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:133:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:134:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:135:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:168:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:169:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/wy/utils/crypto.ets:170:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:63:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:64:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:65:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:74:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:76:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:78:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:79:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:80:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:120:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:121:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:122:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:124:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:125:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:131:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:132:32
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:133:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:134:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:135:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:168:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:169:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/tx/utils/crypto.ets:170:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:63:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:64:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:65:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:83:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:85:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:87:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:88:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:89:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:129:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:130:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:131:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:133:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:134:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:140:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:141:32
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:142:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:143:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:144:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:177:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:178:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kg/utils/crypto.ets:179:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:63:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:64:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:65:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:74:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:76:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:78:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:79:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:80:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:120:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:121:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:122:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:124:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:125:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:131:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:132:32
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:133:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:134:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:135:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:168:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:169:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/kw/utils/crypto.ets:170:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:64:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:65:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:66:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:83:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:85:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:87:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:88:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:89:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:129:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:130:31
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:131:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:133:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:134:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:140:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:141:32
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:142:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:143:16
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:144:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:177:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:178:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/mg/utils/crypto.ets:179:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/utils.ets:52:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/utils.ets:53:12
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/common/musicbasic/src/main/ets/util/musicSdk/utils.ets:54:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:48:42
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:49:30
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:80:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:135:28
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:176:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:177:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:178:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:179:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:180:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:181:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:182:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:183:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:216:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:217:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:218:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:219:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:220:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:221:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AVSessionController.ets:222:24
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AudioPlayerController.ets:60:33
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AudioPlayerController.ets:78:27
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AudioPlayerController.ets:91:47
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AudioPlayerController.ets:111:25
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AudioPlayerController.ets:121:19
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AudioPlayerController.ets:333:19
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/controller/AudioPlayerController.ets:369:25
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/LrcUtils.ets:29:45
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/view/LyricsComponent.ets:90:34
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/ResourceConversion.ets:32:41
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/PreferencesUtil.ets:53:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/PreferencesUtil.ets:54:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/PreferencesUtil.ets:62:29
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/PreferencesUtil.ets:66:17
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/PreferencesUtil.ets:74:29
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/PreferencesUtil.ets:82:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/view/ControlAreaComponent.ets:76:23
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/utils/ColorConversion.ets:86:9
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/view/PlayerInfoComponent.ets:85:15
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/player/src/main/ets/view/PlaybackPage.ets:49:41
+ 'getContext' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/entry/src/main/ets/entryability/EntryAbility.ets:25:17
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/PlaylistSection.ets:87:20
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/PlaylistSection.ets:87:20
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:148:20
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:148:20
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:177:26
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:180:26
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:184:22
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:187:20
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:187:20
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:196:26
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:199:24
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:202:26
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/mine/src/main/ets/view/AudioSourceSection.ets:207:26
+ 'showToast' has been deprecated.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/search/src/main/ets/view/SearchPage.ets:435:45
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[33mWARN: [33m[33mArkTS:WARN File: C:/Users/PoXia/DevEcoStudioProjects/lucid_music/features/search/src/main/ets/view/SearchPage.ets:437:22
+ Function may throw exceptions. Special handling is required.
+[39m[39m
+[39m
+> hvigor [32mFinished :entry:default@CompileArkTS... after 5 s 790 ms [39m
+> hvigor [32mFinished :entry:default@GeneratePkgModuleJson... after 8 ms [39m
+> hvigor [32mFinished :entry:default@ProcessCompiledResources... after 1 ms [39m
+> hvigor [32mFinished :entry:default@PackageHap... after 587 ms [39m
+> hvigor [32mFinished :entry:default@PackingCheck... after 10 ms [39m
+> hvigor [32mFinished :entry:default@SignHap... after 1 s 334 ms [39m
+> hvigor [32mFinished :entry:default@CollectDebugSymbol... after 3 ms [39m
+> hvigor [32mFinished :entry:assembleHap... after 1 ms [39m
+> hvigor [32mBUILD SUCCESSFUL in 9 s 178 ms [39m

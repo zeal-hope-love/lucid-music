@@ -391,7 +391,7 @@ export class MusicMemoryStore {
 
   /** Seeds 8 demo playlist display items for MusicHallPage. */
   private buildMusichallPlaylists(): MusichallPlaylistItem[] {
-    const make = (id: number, title: string, coverIdx: number, playCount: string, ...tagIds: string[]): MusichallPlaylistItem => {
+    const make = (id: string, title: string, coverIdx: number, playCount: string, ...tagIds: string[]): MusichallPlaylistItem => {
       const item = new MusichallPlaylistItem();
       item.playlistId = id;
       item.title = title;
@@ -402,14 +402,14 @@ export class MusicMemoryStore {
     };
 
     return [
-      make(1, '华语经典怀旧精选', 0, '128.5万', 'hot', 'style_chinese'),
-      make(2, '欧美热门单曲榜', 1, '96.3万', 'hot', 'style_western'),
-      make(3, '轻音乐·午后咖啡馆', 2, '53.8万', 'style_light', 'mood_relax'),
-      make(4, '电子音乐·夜店狂潮', 3, '87.2万', 'style_electronic', 'mood_hot'),
-      make(5, '影视原声·经典回响', 4, '62.1万', 'style_soundtrack', 'style_chinese'),
-      make(6, 'K-POP 韩流热单', 5, '115.7万', 'hot', 'style_kpop'),
-      make(7, '爵士名曲·午夜萨克斯', 6, '28.4万', 'style_jazz', 'mood_relax'),
-      make(8, '摇滚力量·经典吉他', 7, '45.9万', 'style_rock', 'mood_hot')
+      make('1', '华语经典怀旧精选', 0, '128.5万', 'hot', 'style_chinese'),
+      make('2', '欧美热门单曲榜', 1, '96.3万', 'hot', 'style_western'),
+      make('3', '轻音乐·午后咖啡馆', 2, '53.8万', 'style_light', 'mood_relax'),
+      make('4', '电子音乐·夜店狂潮', 3, '87.2万', 'style_electronic', 'mood_hot'),
+      make('5', '影视原声·经典回响', 4, '62.1万', 'style_soundtrack', 'style_chinese'),
+      make('6', 'K-POP 韩流热单', 5, '115.7万', 'hot', 'style_kpop'),
+      make('7', '爵士名曲·午夜萨克斯', 6, '28.4万', 'style_jazz', 'mood_relax'),
+      make('8', '摇滚力量·经典吉他', 7, '45.9万', 'style_rock', 'mood_hot')
     ];
   }
 

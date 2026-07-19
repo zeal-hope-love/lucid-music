@@ -103,3 +103,17 @@ export type { AudioSourceOrigin } from './src/main/ets/model/AudioSourceModel';
 export { AudioSourceDb } from './src/main/ets/service/AudioSourceDb';
 export { AudioSourceManager } from './src/main/ets/service/AudioSourceManager';
 export type { ActiveScriptResult, ImportResult } from './src/main/ets/service/AudioSourceManager';
+
+// New: JSVM 音源脚本桥（下沉自 player）
+export { JsVmBridge } from './src/main/ets/service/JsVmBridge';
+export type { ScriptRequestResult } from './src/main/ets/service/JsVmBridge';
+
+// New: musicSdk - 音乐平台 API
+export { wy, tx, kg, kw, mg, sources, ApiSource, apis, supportQuality, searchMusic, findMusic, init } from './src/main/ets/util/musicSdk/index';
+export { PlayUrlResult } from './src/main/ets/util/musicSdk/index';
+export {
+  SearchResultItem, SuggestionItem, CommentItem, SuggestionType
+} from './src/main/ets/util/musicSdk/index';
+export type {
+  SearchResult, CommentResult, BoardItem, BoardListResult, MusicPlatform, SourceInfo
+} from './src/main/ets/util/musicSdk/index';

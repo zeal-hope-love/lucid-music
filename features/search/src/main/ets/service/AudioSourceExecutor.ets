@@ -2,7 +2,7 @@
  * AudioSourceExecutor - 音源执行器
  * 通过 JsVmBridge 调用 C++ JSVM 引擎执行 LX Music 音源脚本获取播放 URL
  */
-import { JsVmBridge } from 'player'
+import { JsVmBridge } from 'musicbasic'
 import { Logger } from 'musicbasic'
 
 const TAG = 'AudioSourceExecutor'

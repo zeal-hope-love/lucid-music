@@ -9,11 +9,11 @@
  */
 export class MusichallPlaylistItem {
   /** 歌单 ID，关联 PlaylistRow.playlistId */
-  playlistId: number = 0
+  playlistId: string = ''
   /** 歌单名称 */
   title: string | Resource = ''
-  /** 封面图资源 */
-  coverImage: Resource = $r('app.media.ic_avatar1')
+  /** 封面图资源，支持本地资源或网络 URL */
+  coverImage: Resource | string = $r('app.media.ic_avatar1')
   /** 播放量文本（如 "12.5万"），封面左下角叠加显示 */
   playCount: string = ''
   /** 关联的分类标签 ID 列表，用于筛选 */

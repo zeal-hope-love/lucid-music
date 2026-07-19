@@ -14,13 +14,25 @@ export struct PlaylistCard {
     Column() {
       // 封面区域（正方形，对齐 MusicHome-master ForYouSection 样式）
       Stack({ alignContent: Alignment.BottomStart }) {
-        // 封面图
-        Image(this.item.coverImage)
-          .width('100%')
-          .aspectRatio(1)
-          .objectFit(ImageFit.Fill)
-          .borderRadius(8)
-          .draggable(false)
+        // 封面图（支持本地资源和网络URL）
+        if (typeof this.item.coverImage === 'string') {
+          // 网络图片
+          Image(this.item.coverImage)
+            .width('100%')
+            .aspectRatio(1)
+            .objectFit(ImageFit.Fill)
+            .borderRadius(8)
+            .draggable(false)
+            .alt($r('app.media.ic_avatar1'))
+        } else {
+          // 本地资源
+          Image(this.item.coverImage)
+            .width('100%')
+            .aspectRatio(1)
+            .objectFit(ImageFit.Fill)
+            .borderRadius(8)
+            .draggable(false)
+        }
 
         // 左下角播放量叠加（MusicHome 风格）
         if (this.item.playCount !== '') {
@@ -57,7 +69,7 @@ export struct PlaylistCard {
       const param = new SongListParam(
         typeof this.item.title === 'string' ? this.item.title : '',
         '',
-        this.item.playlistId
+        Number.parseInt(this.item.playlistId) || 0
       )
       this.navPathStack.pushPath(
         new NavPathInfo(RouterUrlConstants.PLAYLIST_DETAIL, param),

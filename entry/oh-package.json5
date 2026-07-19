@@ -6,7 +6,6 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "libentry.so": "file:./src/main/cpp/types/libentry",
     "musicbasic": "file:../common/musicbasic",
     "player": "file:../features/player",
     "search": "file:../features/search",

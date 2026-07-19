@@ -1,5 +1,5 @@
 export { dispatchShellPlaybackIntent } from './src/main/ets/service/PlaybackIntentDispatcher'
-export { JsVmBridge } from './src/main/ets/service/JsVmBridge'
+export { JsVmBridge, ScriptRequestResult } from 'musicbasic'
 export { MediaService } from './src/main/ets/service/MediaService'
 export { PlayerViewModel } from './src/main/ets/viewmodel/PlayerViewModel'
 

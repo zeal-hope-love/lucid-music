@@ -9,8 +9,7 @@ import { CapsuleSegmentButtonV2, SegmentButtonV2Items, ColorMetrics } from '@kit
 import { AreaWithHdsTabBar, SearchInputArea } from 'musicbasic'
 import { SearchViewModel, SearchState, PlatformTab } from '../viewmodel/SearchViewModel'
 import { SearchResultViewModel } from '../viewmodel/SearchResultViewModel'
-import { SearchResultItem } from '../model/SearchResultItem'
-import { SuggestionItem, SuggestionType } from '../model/SuggestionItem'
+import { SearchResultItem, SuggestionItem, SuggestionType } from 'musicbasic'
 
 
 

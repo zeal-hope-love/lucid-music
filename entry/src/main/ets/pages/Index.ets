@@ -6,11 +6,11 @@
 import { AppStorageV2, curves, display } from '@kit.ArkUI'
 import {
   AppStorageKeys, BottomBarVisibility, CurrentTabState, MusicAppState, MusicDbApi,
-  PlaybackIntentState, RouterUrlConstants, AudioSourceManager
+  PlaybackIntentState, RouterUrlConstants, AudioSourceManager, JsVmBridge
 } from 'musicbasic'
 import { LucidTabBar, MiniPlayerBar } from 'musicbasic'
 import {
-  dispatchShellPlaybackIntent, JsVmBridge, AudioPlayerController, AVSessionController
+  dispatchShellPlaybackIntent, AudioPlayerController, AVSessionController
 } from 'player'
 import { HomePage } from 'home'
 import { MusicHallPage } from 'musichall'

@@ -1,0 +1,5 @@
+[33mohpm WARN: [93m[1mSource code dependencies in project-level "oh-package.json5" are as follows, which could lead to circular dependencies reference.[22m[39m[33m
+	 - "musicbasic@file:./common/musicbasic",
+	 - "jsaudioengine@file:./js_audio_engine"
+[39m[39m
+[32minstall completed in 0s 154ms[39m

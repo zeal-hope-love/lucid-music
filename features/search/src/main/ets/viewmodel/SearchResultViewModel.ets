@@ -3,11 +3,10 @@
  * 结果页VM：管理搜索结果、触发播放/队列操作
  * 搜索结果接入 MusicApiService 真实 API
  */
-import { Logger, PlaybackIntentState, MusicAppState, AppStorageKeys } from 'musicbasic'
+import { Logger, PlaybackIntentState, MusicAppState, AppStorageKeys, ApiSource } from 'musicbasic'
 import { AppStorageV2 } from '@kit.ArkUI'
-import { SearchResultItem } from '../model/SearchResultItem'
-import { MusicApiService } from '../service/MusicApiService'
-import type { PlayUrlResult } from '../service/MusicApiService'
+import { SearchResultItem } from 'musicbasic'
+import type { PlayUrlResult } from 'musicbasic'
 import { AudioSourceExecutor } from '../service/AudioSourceExecutor'
 
 import { DEFAULT_PLATFORM_TABS, PlatformTab, SearchPlatform } from './SearchViewModel'
@@ -37,9 +36,9 @@ export class SearchResultViewModel {
     Logger.info(`${TAG}: doSearch keyword=${keyword} platform=${this.currentPlatform}`)
 
     try {
-      const apiResults = await MusicApiService.search(keyword, this.currentPlatform, 1, 30)
-      Logger.info(`${TAG}: doSearch result count=${apiResults.length}`)
-      this.results = apiResults
+      const apiResults = await ApiSource.search(keyword, this.currentPlatform, 1, 30)
+      Logger.info(`${TAG}: doSearch result count=${apiResults.list.length}`)
+      this.results = apiResults.list
     } catch (e) {
       Logger.error(`${TAG}: doSearch error: ${JSON.stringify(e)}`)
       this.results = []
@@ -88,7 +87,7 @@ export class SearchResultViewModel {
       } else {
         // === 兜底：直接 API ===
         Logger.info(`${TAG}: JSVM unavailable, falling back to direct API`)
-        const result: PlayUrlResult = await MusicApiService.getPlayUrl(item.songId, item.source, item.rawFields)
+        const result: PlayUrlResult = await ApiSource.getPlayUrl(item.songId, item.source, item.rawFields)
         if (result.url) {
           Logger.info(`${TAG}: API playUrl obtained, length=${result.url.length}`)
           this.intentState.remoteUrl = result.url

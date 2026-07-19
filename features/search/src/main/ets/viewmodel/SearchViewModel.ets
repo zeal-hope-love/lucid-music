@@ -4,8 +4,7 @@
  * 所有数据源接入 MusicApiService 真实 API
  */
 import { Logger } from 'musicbasic'
-import { SuggestionItem, SuggestionType } from '../model/SuggestionItem'
-import { MusicApiService } from '../service/MusicApiService'
+import { SuggestionItem, SuggestionType, ApiSource } from 'musicbasic'
 
 const TAG = 'SearchViewModel'
 
@@ -60,26 +59,26 @@ export class SearchViewModel {
   public async initHotSearches(): Promise<void> {
     Logger.info(`${TAG}: initHotSearches platform=${this.currentPlatform}`)
     try {
-      const hots = await MusicApiService.hotSearch(this.currentPlatform)
+      const hots = await ApiSource.hotSearch(this.currentPlatform)
       if (hots && hots.length > 0) {
         this.hotSearches = hots
         Logger.info(`${TAG}: hotSearches loaded count=${hots.length}`)
       } else {
         // 如果当前平台热搜为空，回退到网易云热搜
         if (this.currentPlatform !== SearchPlatform.NETEASE) {
-          const wyHots = await MusicApiService.hotSearch(SearchPlatform.NETEASE)
+          const wyHots = await ApiSource.hotSearch(SearchPlatform.NETEASE)
           if (wyHots && wyHots.length > 0) {
             this.hotSearches = wyHots
           } else {
-            this.hotSearches = MusicApiService.defaultHotSearches()
+            this.hotSearches = ApiSource.defaultHotSearches()
           }
         } else {
-          this.hotSearches = MusicApiService.defaultHotSearches()
+          this.hotSearches = ApiSource.defaultHotSearches()
         }
       }
     } catch (e) {
       Logger.error(`${TAG}: initHotSearches error: ${JSON.stringify(e)}`)
-      this.hotSearches = MusicApiService.defaultHotSearches()
+      this.hotSearches = ApiSource.defaultHotSearches()
     }
   }
 
@@ -90,14 +89,14 @@ export class SearchViewModel {
     Logger.info(`${TAG}: refreshHotSearches platform=${this.currentPlatform}`)
     this.hotSearchExpanded = false
     try {
-      const hots = await MusicApiService.hotSearch(this.currentPlatform)
+      const hots = await ApiSource.hotSearch(this.currentPlatform)
       if (hots && hots.length > 0) {
         this.hotSearches = hots
         Logger.info(`${TAG}: refreshHotSearches loaded count=${hots.length}`)
       } else {
         // 切换到的平台热搜为空，尝试网易云降级
         if (this.currentPlatform !== SearchPlatform.NETEASE) {
-          const wyHots = await MusicApiService.hotSearch(SearchPlatform.NETEASE)
+          const wyHots = await ApiSource.hotSearch(SearchPlatform.NETEASE)
           if (wyHots && wyHots.length > 0) {
             this.hotSearches = wyHots
             Logger.info(`${TAG}: refreshHotSearches fallback to netease count=${wyHots.length}`)
@@ -213,7 +212,7 @@ export class SearchViewModel {
     }
     Logger.info(`${TAG}: fetchSuggestions keyword=${kw} platform=kuwo`)
     try {
-      const items = await MusicApiService.suggest(kw, SearchPlatform.KUWO)
+      const items = await ApiSource.suggest(kw, SearchPlatform.KUWO)
       // 双重检查：请求返回时关键词可能已经变了
       if (this.currentState === SearchState.SUGGESTING && this.keyword.trim() === kw) {
         if (items && items.length > 0) {
