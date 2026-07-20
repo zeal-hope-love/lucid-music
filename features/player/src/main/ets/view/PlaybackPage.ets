@@ -7,7 +7,6 @@ import { common } from '@kit.AbilityKit'
 import { AppStorageKeys, getStatusBarTopVpFromWindowUtil, MusicAppState, MusicDbApi, WindowUtil } from 'musicbasic'
 import { PlayerInfoComponent } from './PlayerInfoComponent'
 import { BreakpointConstants } from '../constants/BreakpointConstants'
-import { SongItem as PlayerSongItem } from 'musicbasic'
 
 @Component
 export struct PlaybackPage {
@@ -50,35 +49,20 @@ export struct PlaybackPage {
     }
   }
 
-  /** 将当前歌曲信息写入 AppStorage */
+  /** 将当前歌曲信息写入 AppStorage（完整队列，songList[selectIndex] 即当前曲） */
   private syncCurrentSongToAppStorage(): void {
-    const songItem = this.appState.getCurrentSongItem()
-    if (!songItem) {
+    const current = this.appState.getCurrentSongItem()
+    if (!current) {
       return
     }
-    // 构建 songItem（现在 common 和 player 共用同一个 SongItem 类型）
-    const playerSongItem = new PlayerSongItem()
-    playerSongItem.id = songItem.id
-    playerSongItem.title = songItem.title
-    playerSongItem.singer = songItem.singer
-    playerSongItem.src = songItem.src
-    playerSongItem.label = songItem.label
-    playerSongItem.lyric = songItem.lyric
-    playerSongItem.coverUrl = songItem.coverUrl || ''
-    playerSongItem.lyricText = songItem.lyricText || ''
-    playerSongItem.isDarkBackground = songItem.isDarkBackground
-
-    // 写入 songList（替换已有同 ID 条目，插入首位）
-    const existingList = AppStorage.get('songList') as Object[]
-    let newList: Object[] = [playerSongItem]
-    if (existingList && Array.isArray(existingList)) {
-      const filtered = existingList.filter((s: Object) =>
-        ((s as Record<string, Object>)['id'] as number) !== playerSongItem.id) as Object[]
-      newList = [playerSongItem as Object, ...filtered]
+    // 构建完整队列（与 AudioPlayerController.syncStateForNewSong 保持一致），供播放列表弹层浏览/切歌
+    const queueList: Object[] = []
+    for (let i = 0; i < this.appState.playQueue.length; i++) {
+      queueList.push(this.appState.playQueue[i] as Object)
     }
-    AppStorage.setOrCreate('songList', newList)
+    AppStorage.setOrCreate('songList', queueList)
     // 同步 selectIndex 从 V2（不再强制置 0）
-    AppStorage.setOrCreate('selectIndex', 0)
+    AppStorage.setOrCreate('selectIndex', this.appState.selectIndex)
     AppStorage.setOrCreate('isFavorite', this.appState.isFavorite)
   }
 

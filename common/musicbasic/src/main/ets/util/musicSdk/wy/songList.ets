@@ -2,7 +2,7 @@
  * wy/songList.ets - 网易云歌单：列表 / 标签 / 歌单内歌曲
  * 对齐 lx-music-mobile wy/songList.js
  */
-import { Logger, MusichallPlaylistItem, TagFilterGroup, TagFilterItem, SearchResultItem } from 'musicbasic'
+import { Logger, MusichallPlaylistItem, TagFilterGroup, TagFilterItem, SearchResultItem, MusichallPlaylistPage, PlaylistDetailResult, PlaylistMeta } from 'musicbasic'
 import { formatDuration } from './utils/crypto'
 import { weapiRequest } from './utils/request'
 import type { SearchResult, QualityType, QualitySizeType, QualityBuildResult } from '../types'
@@ -23,15 +23,16 @@ function buildQualityTypes(item: Record<string, Object>): QualityBuildResult {
 }
 
 // ===== 歌单列表 =====
-export async function getPlaylists(cat: string = '全部', page: number = 0, limit: number = 30): Promise<MusichallPlaylistItem[]> {
+export async function getPlaylists(cat: string = '全部', page: number = 0, limit: number = 30, order?: string): Promise<MusichallPlaylistPage> {
   try {
-    const body = await weapiRequest('top/playlist', {
-      cat: cat, order: 'hot', offset: page * limit, limit: limit, total: true
+    Logger.info(TAG, `wy getPlaylists request | cat=${cat} | order=${order}`)
+    const body = await weapiRequest('playlist/list', {
+      cat: cat || '全部', order: order || 'hot', offset: page * limit, limit: limit, total: true
     })
-    if (!body) { Logger.warn(TAG, `getPlaylists failed: body is null`); return [] }
+    if (!body) { Logger.warn(TAG, `getPlaylists failed: body is null`); return new MusichallPlaylistPage() }
     const code = body.code as number
     const playlists = body.playlists as Record<string, Object>[]
-    if (code !== 200 || !playlists) { Logger.warn(TAG, `getPlaylists failed: cat=${cat}, page=${page}, code=${code}`); return [] }
+    if (code !== 200 || !playlists) { Logger.warn(TAG, `getPlaylists failed: cat=${cat}, page=${page}, code=${code}`); return new MusichallPlaylistPage() }
 
     const results: MusichallPlaylistItem[] = []
     for (const playlist of playlists) {
@@ -43,21 +44,27 @@ export async function getPlaylists(cat: string = '全部', page: number = 0, lim
       const playCount = playlist.playCount as number || 0
       item.playCount = playCount >= 10000 ? (playCount / 10000).toFixed(1) + '万' : playCount.toString()
       item.tags = (playlist.tags as string[]) || []
+      item.source = 'wy'
       results.push(item)
     }
     Logger.info(TAG, `getPlaylists success: cat=${cat}, page=${page}, count=${results.length}`)
-    return results
+    const pg = new MusichallPlaylistPage()
+    pg.items = results
+    pg.page = page
+    pg.limit = limit
+    pg.hasMore = results.length >= limit
+    return pg
   } catch (e) {
     Logger.error(TAG, `getPlaylists error: ${JSON.stringify(e)}`)
-    return []
+    return new MusichallPlaylistPage()
   }
 }
 
 // ===== 歌单分类标签 =====
 export async function getPlaylistTags(): Promise<TagFilterGroup[]> {
   try {
-    const hotBody = await weapiRequest('playlist/hot', {})
-    const catBody = await weapiRequest('playlist/catlist', {})
+    const hotBody = await weapiRequest('playlist/hottags', {})
+    const catBody = await weapiRequest('playlist/catalogue', {})
     const groups: TagFilterGroup[] = []
     if (hotBody) {
       const hotTags = hotBody.tags as Record<string, Object>[]
@@ -67,7 +74,8 @@ export async function getPlaylistTags(): Promise<TagFilterGroup[]> {
         hotGroup.tags = hotTags.map(tag => {
           const item = new TagFilterItem()
           const playlistTag = tag.playlistTag as Record<string, Object> | undefined
-          item.id = (playlistTag?.id as string) || (tag.id as string) || ''
+          // 网易云分类以「分类名」作为 cat（对齐 lx：tag.id === name），故 id 取 name
+          item.id = (playlistTag?.name as string) || (tag.name as string) || ''
           item.name = (playlistTag?.name as string) || (tag.name as string) || ''
           return item
         }).filter(item => item.id && item.name)
@@ -96,11 +104,26 @@ export async function getPlaylistTags(): Promise<TagFilterGroup[]> {
   }
 }
 
-// ===== 歌单内歌曲（新增，对齐 lx songList.getListDetail） =====
-export async function getPlaylistSongs(playlistId: string, page: number = 1, limit: number = 1000): Promise<SearchResult> {
-  const empty: SearchResult = { list: [], allPage: 1, limit, total: 0, source: 'wy' }
+// ===== URL/ID 解析（对齐 lx songList.getListId） =====
+const WY_RE_ID = /^.+(?:\?|&)id=(\d+)(?:&.*$|#.*$|$)/
+const WY_RE_PLAYLIST = /^.+\/playlist\/(\d+)\/\d+\/.+$/
+
+function parsePlaylistId(rawInput: string): string {
+  const id = rawInput.trim()
+  if (/^\d+$/.test(id)) { return id }
+  if (WY_RE_ID.test(id)) { return id.replace(WY_RE_ID, '$1') }
+  if (WY_RE_PLAYLIST.test(id)) { return id.replace(WY_RE_PLAYLIST, '$1') }
+  // 非 URL 或无法识别的格式，原样返回让 API 报错
+  return id
+}
+
+// ===== 歌单内歌曲（对齐 lx songList.getListDetail） =====
+export async function getPlaylistSongs(playlistId: string, page: number = 1, limit: number = 1000): Promise<PlaylistDetailResult> {
+  const id = parsePlaylistId(playlistId)
+  const info = new PlaylistMeta()
+  const empty: PlaylistDetailResult = { list: [], allPage: 1, limit, total: 0, source: 'wy', info }
   try {
-    const body = await weapiRequest('v3/playlist/detail', { id: playlistId, n: limit, s: 8 })
+    const body = await weapiRequest('v3/playlist/detail', { id: id, n: limit, s: 8 })
     if (!body || body['code'] !== 200 || !body['playlist']) { return empty }
     const playlist = body['playlist'] as Record<string, Object>
     const tracks = (playlist['tracks'] as Record<string, Object>[]) || []
@@ -124,7 +147,14 @@ export async function getPlaylistSongs(playlistId: string, page: number = 1, lim
       return r
     })
     const total = (playlist['trackCount'] as number) || list.length
-    return { list, allPage: Math.ceil(total / limit) || 1, limit, total, source: 'wy' }
+    const meta = new PlaylistMeta()
+    meta.name = (playlist['name'] as string) || ''
+    meta.img = ((playlist['coverImgUrl'] as string) || '').replace('http://', 'https://')
+    meta.author = ((playlist['creator'] as Record<string, Object>)?.nickname as string) || ''
+    meta.desc = (playlist['description'] as string) || ''
+    const pc = playlist['playCount'] as number || 0
+    meta.playCount = pc >= 10000 ? (pc / 10000).toFixed(1) + '万' : pc.toString()
+    return { list, allPage: Math.ceil(total / limit) || 1, limit, total, source: 'wy', info: meta }
   } catch (e) {
     Logger.error(TAG, `getPlaylistSongs error: ${JSON.stringify(e)}`)
     return empty

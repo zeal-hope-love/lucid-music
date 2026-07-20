@@ -15,11 +15,12 @@
 
 
 import { HeroCardApiDto, RecommendCardApiDto, SongApiDto, TabApiDto } from '../api/MusicApiDtos';
-import { MusichallPlaylistItem, TagFilterGroup } from '../data/MusichallPlaylistItem';
 import { PlaylistRow } from '../data/PlaylistRow';
 import { RecommendFeedKind, RecommendFeedRow } from '../data/RecommendFeedRow';
 import { SongRow } from '../data/SongRow';
+import { SongItem } from '../model/SongData';
 import { MusicMemoryStore } from '../db/MusicMemoryStore';
+import { PlaylistDb } from '../db/PlaylistDb';
 
 /** Cover resources for the 12-slot private-song carousel UI. */
 const PRIVATE_DISPLAY_LABELS: Resource[] = [
@@ -165,6 +166,29 @@ export class MusicDbApi {
 
   // ==================== 歌单 ====================
 
+  /**
+   * Loads persisted data from {@link PlaylistDb} into the in-memory store:
+   * own playlists (type 0), collected playlists (type 1), recent play, and favorites.
+   * Call once after {@link PlaylistDb.init}.
+   */
+  public async initPlaylists(): Promise<void> {
+    const db = PlaylistDb.getInstance();
+    const results = await Promise.all([
+      db.getAllOwn(),
+      db.getAllCollected(),
+      db.getRecent(),
+      db.getFavorites()
+    ]);
+    const persistedOwn = results[0];
+    const persistedCollected = results[1];
+    const recent = results[2];
+    const favorites = results[3];
+    this.store.playlists = persistedCollected.concat(persistedOwn);
+    this.store.collectedPlaylistIds = persistedCollected.map((p) => p.playlistId);
+    this.store.recentPlayItems = recent;
+    this.store.favoriteItems = favorites;
+  }
+
   /** @returns Own playlists (playlistType === 0). */
   public getOwnPlaylists(): PlaylistRow[] {
     return this.store.playlists.filter((p) => p.playlistType === 0);
@@ -175,50 +199,110 @@ export class MusicDbApi {
     return this.store.playlists.filter((p) => p.playlistType === 1);
   }
 
+  /**
+   * Creates a new own playlist with the given title, persists it, and returns the new row.
+   * @param title User-entered playlist name.
+   */
+  public createOwnPlaylist(title: string): PlaylistRow {
+    let maxId = 0;
+    for (let i = 0; i < this.store.playlists.length; i++) {
+      if (this.store.playlists[i].playlistId > maxId) {
+        maxId = this.store.playlists[i].playlistId;
+      }
+    }
+    const row = new PlaylistRow();
+    row.playlistId = maxId + 1;
+    row.title = title;
+    row.songIds = [];
+    row.playlistType = 0;
+    this.store.playlists.push(row);
+    this.persistOwn();
+    return row;
+  }
+
+  /** Persists current own playlists (type === 0) to {@link PlaylistDb}. */
+  private persistOwn(): void {
+    const own = this.store.playlists.filter((p) => p.playlistType === 0);
+    PlaylistDb.getInstance().saveAllOwn(own);
+  }
+
+  /** Persists current collected playlists (type === 1) to {@link PlaylistDb}. */
+  private persistCollected(): void {
+    const collected = this.store.playlists.filter((p) => p.playlistType === 1);
+    PlaylistDb.getInstance().saveAllCollected(collected);
+  }
+
+  /** Persists current recent-play list to {@link PlaylistDb}. */
+  private persistRecent(): void {
+    PlaylistDb.getInstance().saveRecent(this.store.recentPlayItems);
+  }
+
+  /** Persists current favorite-song list to {@link PlaylistDb}. */
+  private persistFavorites(): void {
+    PlaylistDb.getInstance().saveFavorites(this.store.favoriteItems);
+  }
+
   /** Deletes an own playlist by id and returns true if found and deleted. */
   public deleteOwnPlaylist(id: number): boolean {
-    return this.store.deleteOwnPlaylist(id);
+    const ok = this.store.deleteOwnPlaylist(id);
+    if (ok) {
+      this.persistOwn();
+    }
+    return ok;
   }
 
   /** Removes a playlist from collected list and returns true if found. */
   public removeCollectedPlaylist(id: number): boolean {
-    return this.store.removeCollectedPlaylist(id);
+    const ok = this.store.removeCollectedPlaylist(id);
+    if (ok) {
+      this.persistCollected();
+    }
+    return ok;
+  }
+
+  /** 收藏远程歌单。返回创建的 playlistId。 */
+  public saveRemotePlaylist(name: string, source: string, sourceListId: string, coverUrl: string, author: string): number {
+    const id = this.store.saveRemotePlaylist(name, source, sourceListId, coverUrl, author);
+    this.persistCollected();
+    return id;
+  }
+
+  /** 判断指定 sourceListId 的远程歌单是否已收藏。 */
+  public isRemotePlaylistSaved(sourceListId: string): boolean {
+    return this.store.isRemotePlaylistSaved(sourceListId);
   }
 
   // ==================== MusicHall 歌单展示 ====================
+  // 已移除：MusicHall 现完全依赖真实 API（ApiSource.getPlaylists / getPlaylistTags），
+  // 不再提供本地假种子数据 getter。
 
-  /** @returns MusicHall 歌单展示列表（封面、播放量等 UI 数据）。 */
-  public getMusichallPlaylists(): MusichallPlaylistItem[] {
-    return this.store.musichallPlaylists;
-  }
 
-  /** @returns MusicHall 分类标签树。 */
-  public getMusichallTagGroups(): TagFilterGroup[] {
-    return this.store.musichallTagGroups;
-  }
 
   // ==================== 最近播放 ====================
 
-  /** Records a song as recently played (dedup + prepend). */
-  public addRecentPlay(songId: number): void {
-    this.store.addRecentPlay(songId);
+  /** Records a song as recently played (dedup + prepend) and persists. */
+  public addRecentPlay(songItem: SongItem): void {
+    this.store.addRecentPlay(songItem);
+    this.persistRecent();
   }
 
-  /** @returns Recently played songs in order (most recent first). */
-  public getRecentPlaySongs(): SongApiDto[] {
-    return this.idsToSongDtos(this.store.recentPlayIds);
+  /** @returns Recently played songs (full SongItem) in order (most recent first). */
+  public getRecentPlaySongs(): SongItem[] {
+    return this.store.recentPlayItems;
   }
 
   /** @returns Count of recently played songs. */
   public getRecentPlayCount(): number {
-    return this.store.recentPlayIds.length;
+    return this.store.recentPlayItems.length;
   }
 
   // ==================== 收藏 ====================
 
-  /** Toggles favorite. Returns true if now favorited, false if removed. */
-  public toggleFavorite(songId: number): boolean {
-    return this.store.toggleFavorite(songId);
+  /** Toggles favorite and persists. Returns true if now favorited, false if removed. */
+  public toggleFavorite(songItem: SongItem): boolean {
+    const nowFav = this.store.toggleFavorite(songItem);
+    this.persistFavorites();
+    return nowFav;
   }
 
   /** @returns Whether the song id is currently favorited. */
@@ -226,14 +310,14 @@ export class MusicDbApi {
     return this.store.isFavorite(songId);
   }
 
-  /** @returns Favorited songs in insertion order. */
-  public getFavoriteSongs(): SongApiDto[] {
-    return this.idsToSongDtos(this.store.favoriteSongIds);
+  /** @returns Favorited songs (full SongItem) in insertion order. */
+  public getFavoriteSongs(): SongItem[] {
+    return this.store.favoriteItems;
   }
 
   /** @returns Count of favorited songs. */
   public getFavoriteCount(): number {
-    return this.store.favoriteSongIds.length;
+    return this.store.favoriteItems.length;
   }
 
   /** Maps a {@link SongRow} to {@link SongApiDto}. */

@@ -2,7 +2,7 @@
  * PlaybackIntentDispatcher - 播放意图分发器
  */
 import {
-  Logger, MusicAppState, PlaybackIntentState, SongItem,
+  Logger, MusicAppState, PlaybackIntentState, SongItem, MusicDbApi,
   PlaybackIntentLogEvent, PlaybackShellConstants
 } from 'musicbasic'
 import { AudioPlayerController } from '../controller/AudioPlayerController'
@@ -23,21 +23,27 @@ export async function dispatchShellPlaybackIntent(
   Logger.info(`${TAG}: dispatchShellPlaybackIntent version=${intentState.requestVersion}`)
 
   try {
-    // 处理本地歌曲队列切换（来自 SongListPage 等公共组件的播放请求）
-    if (intentState.pendingQueueIds.length > 0) {
-      const queueIds = [...intentState.pendingQueueIds]
+    // 处理队列切换（歌单内点歌：本地/自建/收藏/在线歌单，队列=该歌单全部歌曲）
+    if (intentState.pendingQueue.length > 0) {
+      const queue = [...intentState.pendingQueue]
       const selectIndex = intentState.pendingSelectIndex
-      intentState.pendingQueueIds = []
+      intentState.pendingQueue = []
       intentState.pendingSelectIndex = 0
-      appState.playQueueIds = queueIds
-      appState.selectIndex = selectIndex
+      appState.playQueue = queue
+      appState.selectIndex = (selectIndex >= 0 && selectIndex < queue.length) ? selectIndex : 0
       AudioPlayerController.getInstance().syncStateForNewSong()
+      // 应用当前歌单标题（点击歌单内歌曲后切换为当前歌单）
+      if (intentState.pendingPlaylistTitle) {
+        appState.currentPlaylistTitle = intentState.pendingPlaylistTitle
+        AppStorage.setOrCreate('currentPlaylistTitle', appState.currentPlaylistTitle)
+      }
+      intentState.pendingPlaylistTitle = ''
       appState.isPlay = true
       await AudioPlayerController.getInstance().playCurrent()
-      Logger.info(`${TAG}: playSongAt queueLen=${queueIds.length} index=${selectIndex}`)
+      Logger.info(`${TAG}: queue switched len=${queue.length} index=${appState.selectIndex}`)
     }
 
-    // 处理远程播放（搜索结果、音源等外部来源）
+    // 处理远程单曲播放（搜索结果等非歌单来源）：加入最近播放，队列切换为“最近播放”
     if (intentState.remoteUrl || intentState.remoteSongName) {
       const urlPreview = intentState.remoteUrl ? intentState.remoteUrl.substring(0, 100) : '<empty>'
       const urlLen = intentState.remoteUrl ? intentState.remoteUrl.length : 0
@@ -49,13 +55,24 @@ export async function dispatchShellPlaybackIntent(
       songItem.src = intentState.remoteUrl || ''
       songItem.coverUrl = intentState.remoteSongCover || ''
       songItem.lyricText = intentState.remoteLyricText || ''
-      Logger.info(`${TAG}: songItem built: coverUrl=${songItem.coverUrl.substring(0, 50)}, lyricLen=${songItem.lyricText.length}`)
-      appState.remoteSongItem = songItem
+      // 补上平台与远程 ID：使 playCurrent 判定为在线歌并触发磁盘缓存落盘（cacheKey=platform_remoteSongId）
+      songItem.platform = intentState.remotePlatform || ''
+      songItem.remoteSongId = intentState.remoteSongId || ''
+      Logger.info(`${TAG}: songItem built: coverUrl=${songItem.coverUrl.substring(0, 50)}, lyricLen=${songItem.lyricText.length}, platform=${songItem.platform}, remoteId=${songItem.remoteSongId}`)
       intentState.resetRemote()
-      AudioPlayerController.getInstance().syncStateForNewSong()
 
-      // 有播放地址则触发播放
+      const hasTitle = intentState.pendingPlaylistTitle !== ''
+      const title = hasTitle ? intentState.pendingPlaylistTitle : '最近播放'
+      intentState.pendingPlaylistTitle = ''
+
       if (songItem.src) {
+        // 加入最近播放，并把队列切换为最近播放列表（新歌位于首位）
+        MusicDbApi.getInstance().addRecentPlay(songItem)
+        appState.playQueue = [...MusicDbApi.getInstance().getRecentPlaySongs()]
+        appState.selectIndex = 0
+        appState.currentPlaylistTitle = title
+        AppStorage.setOrCreate('currentPlaylistTitle', title)
+        AudioPlayerController.getInstance().syncStateForNewSong()
         appState.isPlay = true
         await AudioPlayerController.getInstance().playCurrent()
       } else {
@@ -68,14 +85,17 @@ export async function dispatchShellPlaybackIntent(
       }
     }
 
-    // 处理本地歌曲播放
-    if (intentState.pendingPlaySongId >= 0) {
-      const index = appState.playQueueIds.indexOf(intentState.pendingPlaySongId)
-      if (index >= 0) {
+    // 处理播放列表弹层内点击切歌（按队列索引）
+    if (intentState.pendingPlayIndex >= 0) {
+      const index = intentState.pendingPlayIndex
+      if (index < appState.getQueueLength()) {
         appState.selectIndex = index
-        Logger.info(`${TAG}: song found in queue at index=${index}`)
+        AudioPlayerController.getInstance().syncStateForNewSong()
+        appState.isPlay = true
+        await AudioPlayerController.getInstance().playCurrent()
+        Logger.info(`${TAG}: switch to queue index=${index}`)
       }
-      intentState.pendingPlaySongId = -1
+      intentState.pendingPlayIndex = -1
     }
 
     // 打开全屏播放器 UI

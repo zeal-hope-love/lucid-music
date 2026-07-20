@@ -18,6 +18,25 @@ export class MusichallPlaylistItem {
   playCount: string = ''
   /** 关联的分类标签 ID 列表，用于筛选 */
   tags: string[] = []
+  /** 所属平台（kg/tx/wy/kw/mg），用于详情拉歌与播放取流 */
+  source: string = ''
+}
+
+/**
+ * 歌单分页结果（对齐 lx-music 的 { list, total, page, limit }）。
+ * 用于驱动音乐厅歌单网格的无限滚动：hasMore 告知 UI 是否还有下一页。
+ */
+export class MusichallPlaylistPage {
+  /** 本页歌单列表 */
+  items: MusichallPlaylistItem[] = []
+  /** 是否还有更多页（UI 据此决定是否继续加载） */
+  hasMore: boolean = false
+  /** 总条数（部分平台无精确值则为 0） */
+  total: number = 0
+  /** 当前页码（0-indexed） */
+  page: number = 0
+  /** 每页大小 */
+  limit: number = 30
 }
 
 // ==================== 标签筛选数据模型 ====================

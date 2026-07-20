@@ -33,8 +33,11 @@ export {
   SearchResultItem, SuggestionItem, CommentItem, SuggestionType
 } from './types'
 export type {
-  SearchResult, CommentResult, BoardItem, BoardListResult
+  SearchResult, CommentResult, BoardItem, BoardListResult, PlaylistDetailResult
 } from './types'
+
+// 歌单元数据（class，值导出）
+export { PlaylistMeta } from '../../data/PlaylistDetailResult'
 
 // 播放地址结果
 export { PlayUrlResult } from './wy/utils/crypto'
@@ -115,6 +118,40 @@ export async function findMusic(musicInfo: MusicInfo): Promise<SearchResultItem 
     }
   }
   return best
+}
+
+/**
+ * 跨平台搜索同名歌曲，返回按匹配度降序、排除原平台、Top-N 的候选列表。
+ * 用于取流失败时的「换源回退」（对齐 lx-music-mobile 的 getOtherSource）。
+ * @param musicInfo 含 name/singer，以及原平台 source/songId（用于排除原平台）
+ * @param topN 候选数量上限，默认 3，控制换源最坏耗时
+ */
+/** 换源候选：跨平台搜索得到的同名歌曲 + 匹配分（具名 class，规避 ArkTS 匿名对象字面量限制） */
+class MusicCandidate {
+  item: SearchResultItem
+  score: number
+  constructor(item: SearchResultItem, score: number) {
+    this.item = item
+    this.score = score
+  }
+}
+
+export async function findMusicList(musicInfo: MusicInfo, topN: number = 3): Promise<SearchResultItem[]> {
+  const name: string = musicInfo.name
+  const singer: string = musicInfo.singer || ''
+  const all: Record<string, SearchResult> = await searchMusic({ name, singer, limit: 30 })
+  const candidates: MusicCandidate[] = []
+  for (const src of Object.keys(all)) {
+    if (src === musicInfo.source) { continue }   // 排除原平台，避免回退死循环
+    for (const item of all[src].list) {
+      const score: number = matchScore(item, name, singer)
+      if (score >= 60) {   // 歌名至少「包含匹配」，过滤完全不相关结果
+        candidates.push(new MusicCandidate(item, score))
+      }
+    }
+  }
+  candidates.sort((a, b) => b.score - a.score)
+  return candidates.slice(0, topN).map((c) => c.item)
 }
 
 function filterStr(str: string): string {

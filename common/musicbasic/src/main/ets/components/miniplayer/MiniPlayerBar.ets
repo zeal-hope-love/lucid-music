@@ -8,7 +8,6 @@ import { AppStorageKeys } from '../../constants/Constants'
 import { MusicAppState } from '../../model/MusicAppState'
 import { SongItem } from '../../model/SongData'
 import { PlaybackIntentState } from '../../model/PlaybackIntentState'
-import { MusicDbApi } from '../../util/MusicDbApi'
 import { AreaWithHdsTabBar } from '../floating/AreaWithHdsTabBar'
 
 interface LrcEntry {
@@ -70,7 +69,7 @@ export struct MiniPlayerBar {
 
   @Computed
   get hasSong(): boolean {
-    return this.appState.getQueueLength() > 0 || this.appState.remoteSongItem !== null
+    return this.appState.getQueueLength() > 0
   }
 
   @Computed
@@ -87,7 +86,7 @@ export struct MiniPlayerBar {
   get subLine(): string {
     // 非就绪状态：显示播放状态信息
     const status = this.appState.playbackStatus
-    if (status === 'requesting_url' || status === 'preparing' || status === 'error') {
+    if (status === 'requesting_url' || status === 'preparing' || status === 'switching_source' || status === 'error') {
       return this.appState.playbackStatusMessage || status
     }
     const lyric = this.appState.getCurrentSongItem()?.lyricText
@@ -125,19 +124,12 @@ export struct MiniPlayerBar {
   @Computed
   get subLineIsStatus(): boolean {
     const status = this.appState.playbackStatus
-    return status === 'requesting_url' || status === 'preparing' || status === 'error'
+    return status === 'requesting_url' || status === 'preparing' || status === 'switching_source' || status === 'error'
   }
 
-  // 解析播放列表为 SongItem 数组
+  // 解析播放列表为 SongItem 数组（直接读单一队列）
   private resolvePlaylist(): SongItem[] {
-    const result: SongItem[] = []
-    for (let i = 0; i < this.appState.playQueueIds.length; i++) {
-      const song = this.appState.resolveSongAtQueueIndex(i)
-      if (song) {
-        result.push(song)
-      }
-    }
-    return result
+    return this.appState.playQueue
   }
 
   // ==================== 播放列表 Sheet Builder ====================
@@ -147,7 +139,7 @@ export struct MiniPlayerBar {
     Column() {
       // 标题栏
       Row() {
-        Text('播放列表')
+        Text(this.appState.currentPlaylistTitle)
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
@@ -191,7 +183,7 @@ export struct MiniPlayerBar {
               .width('100%')
               .padding({ left: 20, right: 20, top: 14, bottom: 14 })
               .onClick(() => {
-                this.intentState.pendingPlaySongId = item.id
+                this.intentState.pendingPlayIndex = index
                 this.intentState.requestVersion++
                 this.isShowPlayList = false
               })

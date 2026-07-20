@@ -14,10 +14,10 @@
  */
 
 
-import { MusichallPlaylistItem, TagFilterGroup, TagFilterItem } from '../data/MusichallPlaylistItem';
 import { PlaylistRow } from '../data/PlaylistRow';
 import { RecommendFeedKind, RecommendFeedRow } from '../data/RecommendFeedRow';
 import { SongRow } from '../data/SongRow';
+import { SongItem } from '../model/SongData';
 
 /**
  * In-memory singleton backing demo catalog: songs, one playlist, and home recommend feed rows.
@@ -32,16 +32,12 @@ export class MusicMemoryStore {
   public playlists: PlaylistRow[] = [];
   /** Home feed rows (hero, cards, tabs), unsorted until read via API. */
   public recommendFeed: RecommendFeedRow[] = [];
-  /** Recently played song ids, most recent first, no duplicates. */
-  public recentPlayIds: number[] = [];
-  /** Favorited song ids, insertion order. */
-  public favoriteSongIds: number[] = [];
+  /** Recently played songs (full SongItem), most recent first, no duplicates by id. */
+  public recentPlayItems: SongItem[] = [];
+  /** Favorited songs (full SongItem), insertion order. */
+  public favoriteItems: SongItem[] = [];
   /** Collected playlist ids (歌单收藏, for playlistType === 1), insertion order. */
   public collectedPlaylistIds: number[] = [];
-  /** MusicHall 歌单展示列表（封面、播放量等 UI 数据）。 */
-  public musichallPlaylists: MusichallPlaylistItem[] = [];
-  /** MusicHall 分类标签树。 */
-  public musichallTagGroups: TagFilterGroup[] = [];
 
   /**
    * @returns Shared {@link MusicMemoryStore} instance.
@@ -61,10 +57,9 @@ export class MusicMemoryStore {
   /** Fills songs, playlists, and recommend feed from built-in demo data. */
   private seedTables(): void {
     this.songs = this.buildSongs();
-    this.playlists = this.buildPlaylists();
+    // 歌单不再内置示例：自建歌单由 PlaylistDb 持久化加载，收藏歌单为运行时收藏。
+    this.playlists = [];
     this.recommendFeed = this.buildRecommendFeed();
-    this.musichallPlaylists = this.buildMusichallPlaylists();
-    this.musichallTagGroups = this.buildMusichallTagGroups();
   }
 
   /** Rotating cover art resources for demo tracks (excluding id 1 special case). */
@@ -163,31 +158,50 @@ export class MusicMemoryStore {
 
   // ==================== 最近播放 ====================
 
-  /** Records a play: removes existing entry then prepends to front. */
-  public addRecentPlay(id: number): void {
-    const idx = this.recentPlayIds.indexOf(id);
-    if (idx !== -1) {
-      this.recentPlayIds.splice(idx, 1);
+  /** Stable dedup identity for recent-play, derived from the SongItem's own content (path-independent). */
+  private recentKey(s: SongItem): string {
+    const src: string = s.src
+    if (src && src.length > 0) {
+      // 去 query/fragment 中的易变参数（时间戳/签名），保留稳定主体
+      const base: string = src.split('?')[0].split('#')[0]
+      return `src#${base}`
     }
-    this.recentPlayIds.unshift(id);
+    const title: string = typeof s.title === 'string' ? s.title : ''
+    const singer: string = typeof s.singer === 'string' ? s.singer : ''
+    return `meta#${title}#${singer}`
+  }
+
+  /** Records a play: dedups by stable identity (src, then title+singer), then prepends to front. */
+  public addRecentPlay(item: SongItem): void {
+    const key = this.recentKey(item);
+    const idx = this.recentPlayItems.findIndex((s) => this.recentKey(s) === key);
+    if (idx !== -1) {
+      this.recentPlayItems.splice(idx, 1);
+    }
+    this.recentPlayItems.unshift(item);
+    // 限制最近播放规模，避免持久化文件无限膨胀
+    const RECENT_CAP = 100;
+    if (this.recentPlayItems.length > RECENT_CAP) {
+      this.recentPlayItems.length = RECENT_CAP;
+    }
   }
 
   // ==================== 收藏 ====================
 
   /** Toggles favorite status. Returns the new state (true = favorited). */
-  public toggleFavorite(id: number): boolean {
-    const idx = this.favoriteSongIds.indexOf(id);
+  public toggleFavorite(item: SongItem): boolean {
+    const idx = this.favoriteItems.findIndex((s) => s.id === item.id);
     if (idx !== -1) {
-      this.favoriteSongIds.splice(idx, 1);
+      this.favoriteItems.splice(idx, 1);
       return false;
     }
-    this.favoriteSongIds.push(id);
+    this.favoriteItems.push(item);
     return true;
   }
 
   /** Checks whether a song id is favorited. */
   public isFavorite(id: number): boolean {
-    return this.favoriteSongIds.indexOf(id) !== -1;
+    return this.favoriteItems.findIndex((s) => s.id === id) !== -1;
   }
 
   // ==================== 歌单收藏 ====================
@@ -218,6 +232,30 @@ export class MusicMemoryStore {
     return false;
   }
 
+  /** 收藏远程歌单：创建 PlaylistRow（playlistType=1, songIds 留空）并加入 collectedPlaylistIds。返回创建的 playlistId。 */
+  public saveRemotePlaylist(name: string, source: string, sourceListId: string, coverUrl: string, author: string): number {
+    const newId = this.playlists.length > 0
+      ? Math.max(...this.playlists.map(p => p.playlistId)) + 1
+      : 1
+    const row = new PlaylistRow()
+    row.playlistId = newId
+    row.title = name
+    row.songIds = []
+    row.playlistType = 1
+    row.source = source
+    row.sourceListId = sourceListId
+    row.coverUrl = coverUrl
+    row.author = author
+    this.playlists.push(row)
+    this.collectedPlaylistIds.push(newId)
+    return newId
+  }
+
+  /** 判断远程歌单是否已收藏（按 sourceListId 去重） */
+  public isRemotePlaylistSaved(sourceListId: string): boolean {
+    return this.playlists.some(p => p.playlistType === 1 && p.sourceListId === sourceListId)
+  }
+
   /** Removes a collected playlist from both playlists array and collectedPlaylistIds. */
   public removeCollectedPlaylist(id: number): boolean {
     // 从 collectedPlaylistIds 中移除
@@ -236,43 +274,6 @@ export class MusicMemoryStore {
   }
 
   // ==================== 种子数据 ====================
-
-  /** Seeds own + collected demo playlists. */
-  private buildPlaylists(): PlaylistRow[] {
-    const list: PlaylistRow[] = [];
-
-    const makeOwn = (id: number, title: Resource, songIds: number[]): void => {
-      const pl = new PlaylistRow();
-      pl.playlistId = id;
-      pl.title = title;
-      pl.songIds = songIds;
-      pl.playlistType = 0;
-      list.push(pl);
-    };
-
-    const makeCollected = (id: number, title: Resource, songIds: number[]): void => {
-      const pl = new PlaylistRow();
-      pl.playlistId = id;
-      pl.title = title;
-      pl.songIds = songIds;
-      pl.playlistType = 1;
-      list.push(pl);
-    };
-
-    // 自建歌单
-    makeOwn(1, $r('app.string.playlist_detail_title'), [1, 2]);
-    makeOwn(2, $r('app.string.playlist_title_my_fav'), [1]);
-    makeOwn(3, $r('app.string.playlist_title_chill'), [2]);
-
-    // 收藏歌单
-    makeCollected(4, $r('app.string.playlist_title_trending'), [1, 2]);
-    makeCollected(5, $r('app.string.playlist_title_discover'), [2]);
-
-    // 收藏歌单 ID 加入收藏列表
-    this.collectedPlaylistIds = [4, 5];
-
-    return list;
-  }
 
   /** Builds hero banners, recommend cards, and category tab rows for the home feed. */
   private buildRecommendFeed(): RecommendFeedRow[] {
@@ -373,85 +374,7 @@ export class MusicMemoryStore {
     return rows;
   }
 
-  // ==================== MusicHall 种子数据 ====================
-
-  /** Cover art pool for musichall playlist cards. */
-  private static readonly musichallCoverPool: Resource[] = [
-    $r('app.media.ic_avatar1'),
-    $r('app.media.ic_avatar2'),
-    $r('app.media.ic_avatar4'),
-    $r('app.media.ic_avatar5'),
-    $r('app.media.ic_avatar6'),
-    $r('app.media.ic_avatar8'),
-    $r('app.media.ic_avatar9'),
-    $r('app.media.ic_avatar10'),
-    $r('app.media.ic_avatar11'),
-    $r('app.media.ic_avatar12')
-  ];
-
-  /** Seeds 8 demo playlist display items for MusicHallPage. */
-  private buildMusichallPlaylists(): MusichallPlaylistItem[] {
-    const make = (id: string, title: string, coverIdx: number, playCount: string, ...tagIds: string[]): MusichallPlaylistItem => {
-      const item = new MusichallPlaylistItem();
-      item.playlistId = id;
-      item.title = title;
-      item.coverImage = MusicMemoryStore.musichallCoverPool[coverIdx % 10];
-      item.playCount = playCount;
-      item.tags = tagIds;
-      return item;
-    };
-
-    return [
-      make('1', '华语经典怀旧精选', 0, '128.5万', 'hot', 'style_chinese'),
-      make('2', '欧美热门单曲榜', 1, '96.3万', 'hot', 'style_western'),
-      make('3', '轻音乐·午后咖啡馆', 2, '53.8万', 'style_light', 'mood_relax'),
-      make('4', '电子音乐·夜店狂潮', 3, '87.2万', 'style_electronic', 'mood_hot'),
-      make('5', '影视原声·经典回响', 4, '62.1万', 'style_soundtrack', 'style_chinese'),
-      make('6', 'K-POP 韩流热单', 5, '115.7万', 'hot', 'style_kpop'),
-      make('7', '爵士名曲·午夜萨克斯', 6, '28.4万', 'style_jazz', 'mood_relax'),
-      make('8', '摇滚力量·经典吉他', 7, '45.9万', 'style_rock', 'mood_hot')
-    ];
-  }
-
-  /** Seeds category tag tree for MusicHall tag filter sheet. */
-  private buildMusichallTagGroups(): TagFilterGroup[] {
-    const makeTag = (id: string, name: string): TagFilterItem => {
-      const tag = new TagFilterItem();
-      tag.id = id;
-      tag.name = name;
-      return tag;
-    };
-
-    const makeGroup = (name: string, tags: TagFilterItem[]): TagFilterGroup => {
-      const group = new TagFilterGroup();
-      group.groupName = name;
-      group.tags = tags;
-      return group;
-    };
-
-    return [
-      makeGroup('热门分类', [
-        makeTag('hot', '热门'),
-        makeTag('new', '最新'),
-        makeTag('official', '官方精选')
-      ]),
-      makeGroup('风格流派', [
-        makeTag('style_chinese', '华语'),
-        makeTag('style_western', '欧美'),
-        makeTag('style_kpop', 'K-POP'),
-        makeTag('style_jazz', '爵士'),
-        makeTag('style_rock', '摇滚'),
-        makeTag('style_electronic', '电子'),
-        makeTag('style_light', '轻音乐'),
-        makeTag('style_soundtrack', '影视原声')
-      ]),
-      makeGroup('心情场景', [
-        makeTag('mood_relax', '放松'),
-        makeTag('mood_hot', '嗨起来'),
-        makeTag('mood_sad', '伤感'),
-        makeTag('mood_sweet', '甜蜜'),
-        makeTag('mood_focus', '专注')
-      ])
-    ];
-  }
+  // ==================== MusicHall 种子数据已移除 ====================
+  // MusicHall 现完全依赖真实 API（ApiSource.getPlaylists / getPlaylistTags），
+  // 不再内置假种子数据；拉取失败时在页面提示。
 }

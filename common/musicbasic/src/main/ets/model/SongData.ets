@@ -77,4 +77,14 @@ export class SongItem {
    * Whether the album cover is a dark background (affects status bar text color).
    */
   public isDarkBackground: boolean = false;
+
+  /**
+   * Source platform identifier (e.g. 'wy', 'kg', 'kw', 'tx', 'mg').
+   */
+  public platform: string = '';
+
+  /**
+   * Remote song ID on the source platform.
+   */
+  public remoteSongId: string = '';
 }

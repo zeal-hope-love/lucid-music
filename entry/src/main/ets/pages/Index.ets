@@ -6,7 +6,7 @@
 import { AppStorageV2, curves, display } from '@kit.ArkUI'
 import {
   AppStorageKeys, BottomBarVisibility, CurrentTabState, MusicAppState, MusicDbApi,
-  PlaybackIntentState, RouterUrlConstants, AudioSourceManager, JsVmBridge
+  PlaybackIntentState, RouterUrlConstants, AudioSourceManager, JsVmBridge, SongItem, SongDtoMapper
 } from 'musicbasic'
 import { LucidTabBar, MiniPlayerBar } from 'musicbasic'
 import {
@@ -46,7 +46,17 @@ struct Index {
 
   aboutToAppear() {
     this.currentTabState.index = 0
-    this.appState.playQueueIds = MusicDbApi.getInstance().getSongList().map((dto): number => dto.id)
+    // 默认播放队列：最近播放；无记录则回退全部本地歌曲
+    const recent = MusicDbApi.getInstance().getRecentPlaySongs()
+    if (recent.length > 0) {
+      this.appState.playQueue = [...recent]
+      this.appState.currentPlaylistTitle = '最近播放'
+    } else {
+      this.appState.playQueue =
+        MusicDbApi.getInstance().getSongList().map((dto): SongItem => SongDtoMapper.toSongItem(dto))
+      this.appState.currentPlaylistTitle = '全部歌曲'
+    }
+    AppStorage.setOrCreate('currentPlaylistTitle', this.appState.currentPlaylistTitle)
     JsVmBridge.getInstance().init()
     AudioPlayerController.getInstance().initAVPlayer()
     AVSessionController.getInstance().initAVSession()
@@ -247,6 +257,7 @@ struct Index {
       .mode(NavigationMode.Stack)
       .width('100%')
       .height('100%')
+      .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
       .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 
       // === 底部栏（固定在屏幕底部，不受 Swiper 滑动 / Navigation 导航影响） ===

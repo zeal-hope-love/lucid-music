@@ -7,11 +7,24 @@
         "material": {
           "certpath": "C:\\Users\\PoXia\\.ohos\\config\\default_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B1EADF1D25A60D2304253DD2C608011B7DF2BD2177319DFBFAE988A3950AFBC627924E0098A86B5",
+          "keyPassword": "0000001B284EA60ECC53C2D6E8BF8E918BE6446F03CF2318ECF28DA19CB0465012BBA48A28FEAB3472C6E2",
           "profile": "C:\\Users\\PoXia\\.ohos\\config\\default_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\PoXia\\.ohos\\config\\default_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.p12",
-          "storePassword": "0000001B5295021C157816C7FA2009F25506870DD561BBD2AFC546B0103BE514C17DA66D23AAEE7D9D7035"
+          "storePassword": "0000001BEB4220E3A2C3DE8D8962DA74896A0B3A72A4C2A7CE2458F6227CD44A778A2763CAE5051FC26459"
+        }
+      },
+      {
+        "name": "test",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\PoXia\\.ohos\\config\\test_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BF294740A7F40D39F47BC47A93DC0B9F2DE5089F98874A040EAF775238B73EF36A91E632D04DFC6",
+          "profile": "C:\\Users\\PoXia\\.ohos\\config\\test_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\PoXia\\.ohos\\config\\test_lucid_music_HxLYQHnT3jFJruTDQxaI_FxRTMsm_RbWUg9HR3AsfqY=.p12",
+          "storePassword": "0000001B16366E6012B2684DBDAD3A37E17F4E071E474F499DBDC11D2FA1C9E4377934CFA49A7C1139A655"
         }
       }
     ],

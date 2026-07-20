@@ -110,7 +110,6 @@ export struct SearchInputArea {
       content: (): void => { this.searchContent() }
     })
     .geometryTransition('SEARCH_ONE_SHOT_TRANSITION_ID', { follow: this.isFollow })
-    .transition(TransitionEffect.opacity(0.99))
     .width('100%')
   }
 }

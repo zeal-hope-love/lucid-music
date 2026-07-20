@@ -2,7 +2,7 @@
  * Lucid Music - 歌单卡片组件（对齐 MusicHome-master 样式）
  * 正方形封面 + 左下角播放量叠加 + 下方歌单名称，网格展示，不左右滑动。
  */
-import { MusichallPlaylistItem, RouterUrlConstants } from 'musicbasic'
+import { MusichallPlaylistItem, RouterUrlConstants, MusicCoverImage } from 'musicbasic'
 import { SongListParam } from 'musicbasic'
 
 @ComponentV2
@@ -16,14 +16,8 @@ export struct PlaylistCard {
       Stack({ alignContent: Alignment.BottomStart }) {
         // 封面图（支持本地资源和网络URL）
         if (typeof this.item.coverImage === 'string') {
-          // 网络图片
-          Image(this.item.coverImage)
-            .width('100%')
-            .aspectRatio(1)
-            .objectFit(ImageFit.Fill)
-            .borderRadius(8)
-            .draggable(false)
-            .alt($r('app.media.ic_avatar1'))
+          // 网络图片：kw 走带 Referer 下载渲染，其它平台原生 Image
+          MusicCoverImage({ url: this.item.coverImage, source: this.item.source })
         } else {
           // 本地资源
           Image(this.item.coverImage)
@@ -69,7 +63,8 @@ export struct PlaylistCard {
       const param = new SongListParam(
         typeof this.item.title === 'string' ? this.item.title : '',
         '',
-        Number.parseInt(this.item.playlistId) || 0
+        this.item.playlistId,
+        this.item.source
       )
       this.navPathStack.pushPath(
         new NavPathInfo(RouterUrlConstants.PLAYLIST_DETAIL, param),

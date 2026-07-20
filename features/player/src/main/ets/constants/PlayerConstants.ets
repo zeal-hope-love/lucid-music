@@ -16,6 +16,9 @@
 /**
  * Constants for player area.
  */
+import { MusicPlayMode, PLAY_MODE_CYCLE_ORDER } from 'musicbasic'
+export { MusicPlayMode, PLAY_MODE_CYCLE_ORDER }
+
 export class PlayerConstants {
   static readonly FONT_REDUCE: number = 4;
   static readonly LAYOUT_WEIGHT_PLAYER_CONTROL: number = 1;
@@ -33,15 +36,12 @@ export class PlayerConstants {
   static readonly ENCODING: string = 'utf-8';
   static readonly BACK_IMAGE: string = '120%';
   static readonly IMAGE_BLUR: number = 15;
+  /** 模糊前统一解码尺寸：对齐 QQ 封面 500x500，使各平台固定模糊半径下视觉一致 */
+  static readonly BLUR_SOURCE_SIZE: number = 500;
 }
 
-export enum MusicPlayMode {
-  SINGLE_CYCLE = 0,
-  ORDER = 1,
-  RANDOM = 2
-}
-
-export const PlayModeSwitchList = [MusicPlayMode.ORDER, MusicPlayMode.RANDOM, MusicPlayMode.SINGLE_CYCLE];
+/** 兼容别名：模式切换顺序（顺序 → 随机 → 单曲循环）。定义见 musicbasic/model/PlayMode。 */
+export const PlayModeSwitchList = PLAY_MODE_CYCLE_ORDER;
 
 export enum AudioPlayerState {
   IDLE,

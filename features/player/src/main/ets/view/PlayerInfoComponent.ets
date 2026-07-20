@@ -319,7 +319,9 @@ export struct PlayerInfoComponent {
    * 从 ArrayBuffer 创建 PixelMap，提取主色调并生成模糊背景。
    */
   private extractImageColorAndBlur(buffer: ArrayBuffer): void {
-    image.createImageSource(buffer).createPixelMap().then((pixelMap) => {
+    image.createImageSource(buffer).createPixelMap({
+      desiredSize: { width: PlayerConstants.BLUR_SOURCE_SIZE, height: PlayerConstants.BLUR_SOURCE_SIZE }
+    }).then((pixelMap) => {
       effectKit.createColorPicker(pixelMap, (error, colorPicker) => {
         if (error) {
           Logger.error(TAG, 'Failed to create color picker.');

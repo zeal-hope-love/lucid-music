@@ -3,7 +3,7 @@
  */
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit'
 import { window } from '@kit.ArkUI'
-import { getAppRuntime, Logger, WindowUtil, AudioSourceManager, JsVmBridge } from 'musicbasic'
+import { getAppRuntime, Logger, WindowUtil, AudioSourceManager, JsVmBridge, PlaylistDb, MusicDbApi } from 'musicbasic'
 import { MediaService } from 'player'
 import { BusinessError } from '@kit.BasicServicesKit'
 
@@ -51,6 +51,12 @@ export default class EntryAbility extends UIAbility {
       } catch (e) {
         Logger.error(`WindowUtil init error: ${(e as BusinessError).message}`)
       }
+      // 异步初始化歌单持久化：先 init PlaylistDb，再加载自建歌单到内存
+      PlaylistDb.getInstance().init(this.context)
+        .then(() => MusicDbApi.getInstance().initPlaylists())
+        .catch((e: BusinessError) => {
+          Logger.error(`initPlaylists error: ${e.message}`)
+        })
     })
   }
 

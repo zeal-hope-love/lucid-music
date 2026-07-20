@@ -6,13 +6,12 @@ import { audio } from '@kit.AudioKit'
 import { common } from '@kit.AbilityKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import {
-  AppStorageKeys, Logger, MusicAppState, MusicDbApi
+  AppStorageKeys, Logger, MusicAppState, MusicDbApi, MusicPlayMode, SongItem, RemotePlayHelper, AudioCacheHelper
 } from 'musicbasic'
 import { AppStorageV2 } from '@kit.ArkUI'
 import { MediaTools } from './MediaTools'
 import { AVSessionController } from './AVSessionController'
 import { BackgroundUtil } from '../utils/BackgroundUtil'
-import { MusicPlayMode } from '../constants/PlayerConstants'
 
 const TAG = 'AudioPlayerController'
 const speedMap: Map<number, media.PlaybackSpeed> = new Map([
@@ -34,7 +33,6 @@ export class AudioPlayerController {
   private preparingTimer: number = -1
   private static instance: AudioPlayerController | undefined
   private appState: MusicAppState
-  private playMode: MusicPlayMode = MusicPlayMode.ORDER
   private isMuted: boolean = false
 
   private constructor() {
@@ -86,6 +84,10 @@ export class AudioPlayerController {
     }, 15000)
     if (url.startsWith('http://') || url.startsWith('https://')) {
       this.avPlayer.url = url
+    } else if (url.startsWith('/')) {
+      // 本地缓存文件（绝对路径），直接按 url 播放
+      this.avPlayer.url = url
+      Logger.info(`${TAG}: loadAndPlay local cached file, path=${url}`)
     } else {
       const ctx = AppStorage.get('context') as common.UIAbilityContext
       const rawFd = await ctx.resourceManager.getRawFd(url)
@@ -147,11 +149,10 @@ export class AudioPlayerController {
    * 从外部（如 MusicListPage）发起播放：设置队列 + 选中索引 + 开始播放。
    * 这是统一的外部播放请求入口。
    */
-  public async playSongAt(queueIds: number[], index: number): Promise<void> {
-    this.appState.playQueueIds = [...queueIds]
+  public async playSongAt(queue: SongItem[], index: number): Promise<void> {
+    this.appState.playQueue = [...queue]
     this.appState.selectIndex = index
     this.appState.isPlay = true
-    this.appState.remoteSongItem = null
     this.syncStateForNewSong()
     AppStorage.setOrCreate('isPlay', true)
     await this.playCurrent()
@@ -165,7 +166,6 @@ export class AudioPlayerController {
       return
     }
     this.appState.selectIndex = index
-    this.appState.remoteSongItem = null
     this.syncStateForNewSong()
     this.playCurrent()
   }
@@ -194,13 +194,13 @@ export class AudioPlayerController {
     AppStorage.setOrCreate('progressMax', 0)
     AppStorage.setOrCreate('totalTime', '00:00')
 
-    // 2. 同步 songList 到 V1（当前歌曲在首位）
-    const songItem = this.appState.getCurrentSongItem()
-    if (songItem) {
-      const list: Object[] = [songItem as Object]
-      AppStorage.setOrCreate('songList', list)
-      AppStorage.setOrCreate('selectIndex', 0)
+    // 2. 同步 songList 到 V1（完整队列，供播放列表弹层浏览/切歌）
+    const queueList: Object[] = []
+    for (let i = 0; i < this.appState.playQueue.length; i++) {
+      queueList.push(this.appState.playQueue[i] as Object)
     }
+    AppStorage.setOrCreate('songList', queueList)
+    AppStorage.setOrCreate('selectIndex', this.appState.selectIndex)
 
     // 3. 同步 isFavorite 到 V1
     const item = this.appState.getCurrentSongItem()
@@ -219,7 +219,7 @@ export class AudioPlayerController {
       return
     }
     let nextIndex = this.appState.selectIndex
-    switch (this.playMode) {
+    switch (this.appState.playMode) {
       case MusicPlayMode.SINGLE_CYCLE:
         // 单曲循环：不改变索引
         break
@@ -234,7 +234,6 @@ export class AudioPlayerController {
         break
     }
     this.appState.selectIndex = nextIndex
-    this.appState.remoteSongItem = null
     this.syncStateForNewSong()
     this.playCurrent()
   }
@@ -245,7 +244,7 @@ export class AudioPlayerController {
       return
     }
     let prevIndex = this.appState.selectIndex
-    switch (this.playMode) {
+    switch (this.appState.playMode) {
       case MusicPlayMode.SINGLE_CYCLE:
         break
       case MusicPlayMode.ORDER:
@@ -259,7 +258,6 @@ export class AudioPlayerController {
         break
     }
     this.appState.selectIndex = prevIndex
-    this.appState.remoteSongItem = null
     this.syncStateForNewSong()
     this.playCurrent()
   }
@@ -270,12 +268,50 @@ export class AudioPlayerController {
       Logger.warn(`${TAG}: playCurrent, no current song`)
       return
     }
-    MusicDbApi.getInstance().addRecentPlay(songItem.id)
     try {
-      const url: string = songItem.src
+      let url: string = songItem.src
+      const isRemote = !!songItem.platform && !!songItem.remoteSongId
+      const cacheKey: string = isRemote ? `${songItem.platform}_${songItem.remoteSongId}` : ''
+
+      // 1. 命中磁盘缓存 → 直接播本地文件，并离线回填歌曲信息/歌词/封面，跳过取流
+      if (cacheKey) {
+        const cached = AudioCacheHelper.getInstance().getCachedAudio(cacheKey)
+        if (cached) {
+          // 注意：不修改 songItem.src（保留远程 URL/空），以便缓存被清理后能正确回退在线取流
+          songItem.lyricText = cached.meta.lyricText
+          songItem.coverUrl = cached.imagePath || cached.meta.coverUrl
+          if (typeof cached.meta.title === 'string') {
+            songItem.title = cached.meta.title
+          }
+          if (typeof cached.meta.artist === 'string') {
+            songItem.singer = cached.meta.artist
+          }
+          Logger.info(`${TAG}: playCurrent cache hit key=${cacheKey}`)
+          MusicDbApi.getInstance().addRecentPlay(songItem)
+          await this.loadAndPlay(cached.audioPath)
+          return
+        }
+      }
+
+      // 2. 在线歌：src 为空但有 platform + remoteSongId → 现取流并回填
+      if (!url && isRemote) {
+        this.syncPlaybackStatus('requesting_url', '正在请求播放地址...')
+        const resolved = await RemotePlayHelper.resolveUrlForQueue(songItem, (status, message) => {
+          this.syncPlaybackStatus(status, message)
+        })
+        if (resolved) {
+          url = resolved
+          songItem.src = resolved
+        }
+      }
+      MusicDbApi.getInstance().addRecentPlay(songItem)
       Logger.info(`${TAG}: playCurrent srcUrl - prefix=${url.substring(0, 100)}, len=${url.length}, id=${songItem.id}`)
       if (url) {
         await this.loadAndPlay(url)
+        // 3. 后台落盘（仅在线歌且未命中缓存时）：音频+封面+歌词+歌曲信息
+        if (cacheKey && (url.startsWith('http://') || url.startsWith('https://'))) {
+          AudioCacheHelper.getInstance().cacheRemoteSong(cacheKey, songItem, url)
+        }
       } else {
         Logger.warn(`${TAG}: no audio source for current song`)
         this.syncPlaybackStatus('error', '获取播放地址失败')
@@ -314,10 +350,18 @@ export class AudioPlayerController {
   }
 
   public setPlayMode(mode: MusicPlayMode): void {
-    this.playMode = mode
-    this.appState.playMode = mode
-    AppStorage.setOrCreate('playMode', mode)
+    this.appState.setPlayMode(mode)
     this.avSessionController.setPlayModeToAVSession(mode)
+  }
+
+  /**
+   * 推进到下一播放模式（顺序 → 随机 → 单曲循环），经 {@link MusicAppState.cyclePlayMode} 统一处理。
+   * @returns 切换后的新模式
+   */
+  public cyclePlayMode(): MusicPlayMode {
+    const next = this.appState.cyclePlayMode()
+    this.avSessionController.setPlayModeToAVSession(next)
+    return next
   }
 
   public getCurrentVolume(): number {
@@ -504,7 +548,7 @@ export class AudioPlayerController {
   private async initSessionMetadata(): Promise<void> {
     try {
       await this.avSessionController.initAVSession()
-      this.avSessionController.setPlayModeToAVSession(this.playMode)
+      this.avSessionController.setPlayModeToAVSession(this.appState.playMode)
       const songItem = this.appState.getCurrentSongItem()
       if (songItem) {
         const title = typeof songItem.title === 'string' ? songItem.title : '未知歌曲'

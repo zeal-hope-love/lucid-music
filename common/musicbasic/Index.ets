@@ -39,8 +39,10 @@ export { TabItem } from './src/main/ets/model/TabItem';
 export { SongRow } from './src/main/ets/data/SongRow';
 export { PlaylistRow } from './src/main/ets/data/PlaylistRow';
 export { RecommendFeedKind, RecommendFeedRow } from './src/main/ets/data/RecommendFeedRow';
-export { MusichallPlaylistItem, TagFilterItem, TagFilterGroup } from './src/main/ets/data/MusichallPlaylistItem';
+export { MusichallPlaylistItem, TagFilterItem, TagFilterGroup, MusichallPlaylistPage } from './src/main/ets/data/MusichallPlaylistItem';
+export { PlaylistMeta, PlaylistDetailResult } from './src/main/ets/data/PlaylistDetailResult';
 export { MusicMemoryStore } from './src/main/ets/db/MusicMemoryStore';
+export { PlaylistDb } from './src/main/ets/db/PlaylistDb';
 export { MusicDbApi } from './src/main/ets/util/MusicDbApi';
 
 // API DTOs for MusicDbApi (separate from row types in data/*)
@@ -60,6 +62,7 @@ export { SongItem } from './src/main/ets/model/SongData';
 export { OptionItem } from './src/main/ets/model/OptionItem';
 export { MusicAppState } from './src/main/ets/model/MusicAppState';
 export { PlaybackIntentState } from './src/main/ets/model/PlaybackIntentState';
+export { MusicPlayMode, PLAY_MODE_CYCLE_ORDER } from './src/main/ets/model/PlayMode';
 export { CurrentTabState } from './src/main/ets/model/CurrentTabState';
 export { BottomBarVisibility } from './src/main/ets/model/BottomBarVisibility';
 export { SongDataSource } from './src/main/ets/model/SongDataSource';
@@ -82,6 +85,7 @@ export { getResourceString } from './src/main/ets/util/ResourceStringUtil';
 
 export { MusicEmptyComponent } from './src/main/ets/components/MusicEmptyComponent';
 export { MusicTextIcon } from './src/main/ets/components/MusicTextIcon';
+export { MusicCoverImage } from './src/main/ets/components/MusicCoverImage';
 
 // New: 公共 UI 组件
 export { AreaWithHdsTabBar } from './src/main/ets/components/floating/AreaWithHdsTabBar';
@@ -108,8 +112,17 @@ export type { ActiveScriptResult, ImportResult } from './src/main/ets/service/Au
 export { JsVmBridge } from './src/main/ets/service/JsVmBridge';
 export type { ScriptRequestResult } from './src/main/ets/service/JsVmBridge';
 
+// New: 远程歌曲播放执行器与共享 helper
+export { AudioSourceExecutor } from './src/main/ets/service/AudioSourceExecutor';
+export type { ExecutorPlayResult } from './src/main/ets/service/AudioSourceExecutor';
+export { RemotePlayHelper } from './src/main/ets/util/RemotePlayHelper';
+
+// New: 播放缓存管理器（音频+封面+歌词+歌曲信息 磁盘缓存）
+export { AudioCacheHelper } from './src/main/ets/util/AudioCacheHelper';
+export { SongMeta, AudioCacheEntry } from './src/main/ets/util/AudioCacheHelper';
+
 // New: musicSdk - 音乐平台 API
-export { wy, tx, kg, kw, mg, sources, ApiSource, apis, supportQuality, searchMusic, findMusic, init } from './src/main/ets/util/musicSdk/index';
+export { wy, tx, kg, kw, mg, sources, ApiSource, apis, supportQuality, searchMusic, findMusic, findMusicList, init } from './src/main/ets/util/musicSdk/index';
 export { PlayUrlResult } from './src/main/ets/util/musicSdk/index';
 export {
   SearchResultItem, SuggestionItem, CommentItem, SuggestionType

@@ -8,7 +8,7 @@ import { http } from '@kit.NetworkKit'
 import { image } from '@kit.ImageKit'
 import { util } from '@kit.ArkTS'
 import { AppStorageV2 } from '@kit.ArkUI'
-import { AppStorageKeys, CurrentTabState, Logger, MusicDbApi } from 'musicbasic'
+import { AppStorageKeys, CurrentTabState, Logger, MusicAppState, MusicDbApi } from 'musicbasic'
 import { MusicPlayMode, PlayModeSwitchList } from '../constants/PlayerConstants'
 import { AudioPlayerController } from './AudioPlayerController'
 
@@ -246,11 +246,13 @@ export class AVSessionController {
   }
 
   private onToggleFavorite: (assetId: string) => void = (assetId: string) => {
-    const songId = parseInt(assetId)
-    if (isNaN(songId)) {
+    const appState = AppStorageV2.connect(MusicAppState, AppStorageKeys.MUSIC_APP_STATE,
+      () => new MusicAppState())!
+    const item = appState.getCurrentSongItem()
+    if (!item) {
       return
     }
-    const nowFav = MusicDbApi.getInstance().toggleFavorite(songId)
+    const nowFav = MusicDbApi.getInstance().toggleFavorite(item)
     this.updateFavoriteState(assetId, nowFav)
     this.currentTabState.favoriteVersion++
   }

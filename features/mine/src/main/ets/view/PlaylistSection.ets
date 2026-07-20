@@ -1,7 +1,7 @@
 /*
- * Lucid Music - 歌单区域组件
- * 布局：切换按钮（自建歌单 | 收藏歌单）+ 歌单列表（封面 + 歌单名 + 数量）
- * 功能：左滑删除（仅自建歌单）
+ * Lucid Music - 歌单区域组件（合并版）
+ * 统一展示「我的歌单」：包含自建歌单和收藏歌单，每项标注类型
+ * 功能：新建自建歌单、点击进入详情、左滑删除
  */
 import { promptAction } from '@kit.ArkUI'
 import { AppStorageV2 } from '@kit.ArkUI'
@@ -9,17 +9,74 @@ import {
   AppStorageKeys, CurrentTabState, MusicDbApi, PlaylistRow, RouterUrlConstants, SongListParam
 } from 'musicbasic'
 
+// ==================== 新建歌单 Dialog ====================
+
+@CustomDialog
+struct CreatePlaylistDialog {
+  controller: CustomDialogController
+  confirm: (name: string) => void = () => {}
+
+  build() {
+    Column() {
+      Text('新建歌单')
+        .fontSize(18)
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('sys.color.ohos_id_color_text_primary'))
+        .margin({ bottom: 16 })
+
+      TextInput({ placeholder: '请输入歌单名称' })
+        .width('100%')
+        .height(44)
+        .fontSize(15)
+        .borderRadius(10)
+        .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
+        .padding({ left: 12, right: 12 })
+        .margin({ bottom: 20 })
+        .onChange((value: string) => { this._inputText = value })
+
+      Row({ space: 12 }) {
+        Button('取消')
+          .buttonStyle(ButtonStyleMode.NORMAL)
+          .type(ButtonType.ROUNDED_RECTANGLE)
+          .layoutWeight(1)
+          .onClick(() => { this.controller.close() })
+
+        Button('创建')
+          .buttonStyle(ButtonStyleMode.EMPHASIZED)
+          .type(ButtonType.ROUNDED_RECTANGLE)
+          .layoutWeight(1)
+          .onClick(() => {
+            const name = this._inputText.trim()
+            if (name.length === 0) {
+              return
+            }
+            this.controller.close()
+            this.confirm(name)
+          })
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .padding(20)
+  }
+
+  _inputText: string = ''
+}
+
+/** 平台颜色映射 */
+const SOURCE_COLORS: Record<string, string> = {
+  'kg': '#2E8BFC', 'tx': '#31C27C', 'wy': '#C20C0C', 'kw': '#FFCC00', 'mg': '#E81E25'
+}
+
 @ComponentV2
 export struct PlaylistSection {
   @Consumer() navPathStack: NavPathStack = new NavPathStack()
-  @Local currentType: number = 0 // 0 = 自建歌单, 1 = 收藏歌单
   @Local playlists: PlaylistRow[] = []
   @Local currentTabState: CurrentTabState =
     AppStorageV2.connect(CurrentTabState, AppStorageKeys.CURRENT_TAB_STATE, () => new CurrentTabState())!
   /** playlistId → 第一首歌封面 Resource */
-  @Local coverMap: Map<number, Resource> = new Map()
-  /** 待删除的歌单 ID（用于左滑删除） */
-  @Local pendingDeleteId: number = 0
+  @Local coverMap: Map<number, string> = new Map()
+  private dialogController: CustomDialogController | null = null
 
   aboutToAppear(): void {
     this.loadPlaylists()
@@ -32,57 +89,76 @@ export struct PlaylistSection {
 
   private loadPlaylists(): void {
     const api = MusicDbApi.getInstance()
-    if (this.currentType === 0) {
-      this.playlists = api.getOwnPlaylists()
-    } else {
-      this.playlists = api.getCollectedPlaylists()
-    }
-    // 预加载每首歌单第一首歌的封面
+    // 合并自建歌单和收藏歌单
+    const own = api.getOwnPlaylists()
+    const collected = api.getCollectedPlaylists()
+    this.playlists = [...own, ...collected]
+    // 预加载封面：自建用第一首歌，收藏用 coverUrl
     this.coverMap.clear()
     for (const pl of this.playlists) {
-      if (pl.songIds.length > 0) {
-        const firstSong = api.getSongById(pl.songIds[0])
-        if (firstSong !== undefined) {
-          this.coverMap.set(pl.playlistId, firstSong.label)
-        }
+      if (pl.playlistType === 1 && pl.coverUrl) {
+        this.coverMap.set(pl.playlistId, pl.coverUrl)
+      } else if (pl.songIds.length > 0) {
+        // 自建歌单用第一首歌封面 Resource 路径 - 用占位图
+        this.coverMap.set(pl.playlistId, '')
       }
     }
   }
 
-  private onToggle(type: number): void {
-    if (this.currentType === type) {
-      return
-    }
-    this.currentType = type
+  private openCreateDialog(): void {
+    this.dialogController = new CustomDialogController({
+      builder: CreatePlaylistDialog({
+        confirm: (name: string) => { this.onCreatePlaylist(name) }
+      }),
+      autoCancel: true,
+      alignment: DialogAlignment.Center
+    })
+    this.dialogController.open()
+  }
+
+  private onCreatePlaylist(name: string): void {
+    const api = MusicDbApi.getInstance()
+    api.createOwnPlaylist(name)
     this.loadPlaylists()
+    promptAction.showToast({ message: '已创建歌单', duration: 2000 })
   }
 
   private onPlaylistTap(playlist: PlaylistRow): void {
-    const param = new SongListParam('', '', playlist.playlistId)
-    param.title = '歌单详情'
-    this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYLIST_DETAIL, param))
+    if (playlist.playlistType === 1) {
+      // 收藏歌单：远程模式
+      const param = new SongListParam('歌单详情', '', playlist.sourceListId, playlist.source)
+      this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYLIST_DETAIL, param))
+    } else {
+      // 自建歌单：本地模式
+      const param = new SongListParam('', '', String(playlist.playlistId))
+      param.title = '歌单详情'
+      this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.PLAYLIST_DETAIL, param))
+    }
   }
 
-  /** 获取歌单第一首歌封面，无则返回占位 */
-  private getCover(playlistId: number): Resource {
-    return this.coverMap.get(playlistId) ?? $r('app.media.ic_avatar1')
+  /** 获取封面：收藏歌单用 coverUrl，自建用本地资源 */
+  private getCover(playlist: PlaylistRow): string | Resource {
+    if (playlist.playlistType === 1 && playlist.coverUrl) {
+      return playlist.coverUrl
+    }
+    const api = MusicDbApi.getInstance()
+    if (playlist.songIds.length > 0) {
+      const firstSong = api.getSongById(playlist.songIds[0])
+      if (firstSong !== undefined) {
+        return firstSong.label
+      }
+    }
+    return $r('app.media.ic_avatar1')
   }
 
-  // ==================== 左滑删除 ====================
-
-  private async onDeletePlaylist(playlistId: number): Promise<void> {
+  private onDeletePlaylist(playlist: PlaylistRow): void {
     const api = MusicDbApi.getInstance()
     let success = false
-    
-    // 根据当前歌单类型调用不同的删除方法
-    if (this.currentType === 0) {
-      // 自建歌单：删除歌单
-      success = api.deleteOwnPlaylist(playlistId)
+    if (playlist.playlistType === 0) {
+      success = api.deleteOwnPlaylist(playlist.playlistId)
     } else {
-      // 收藏歌单：取消收藏
-      success = api.removeCollectedPlaylist(playlistId)
+      success = api.removeCollectedPlaylist(playlist.playlistId)
     }
-    
     if (success) {
       promptAction.showToast({ message: '已删除', duration: 2000 })
       this.loadPlaylists()
@@ -90,7 +166,7 @@ export struct PlaylistSection {
   }
 
   @Builder
-  swipeTrashBuilder(): void {
+  swipeTrashBuilder(playlist: PlaylistRow): void {
     Button({ type: ButtonType.Circle }) {
       SymbolGlyph($r('sys.symbol.trash_fill'))
         .fontSize(20)
@@ -100,48 +176,34 @@ export struct PlaylistSection {
     .width(44)
     .height(44)
     .margin({ right: 12 })
-    .onClick(() => { this.onDeletePlaylist(this.pendingDeleteId) })
+    .onClick(() => { this.onDeletePlaylist(playlist) })
   }
 
   build() {
     Column() {
-      // === 切换按钮：自建歌单 | 收藏歌单 ===
-      Row({ space: 0 }) {
-        // 自建歌单按钮
-        Column() {
-          Text('自建歌单')
-            .fontSize(17)
-            .fontWeight(this.currentType === 0 ? FontWeight.Bold : FontWeight.Normal)
-            .fontColor(this.currentType === 0
-              ? $r('sys.color.ohos_id_color_text_primary')
-              : $r('sys.color.ohos_id_color_text_secondary'))
-        }
-        .padding({ left: 12, right: 12, top: 4, bottom: 4 })
-        .borderRadius(8)
-        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 1.0 })
-        .onClick(() => { this.onToggle(0) })
+      // === 标题栏：我的歌单 + 新建按钮 ===
+      Row() {
+        Text('我的歌单')
+          .fontSize(17)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.ohos_id_color_text_primary'))
 
-        // 分隔竖线
-        Text('|')
-          .fontSize(16)
-          .fontColor($r('sys.color.ohos_id_color_list_separator'))
-          .margin({ left: 12, right: 12 })
+        Blank()
 
-        // 收藏歌单按钮
-        Column() {
-          Text('收藏歌单')
-            .fontSize(17)
-            .fontWeight(this.currentType === 1 ? FontWeight.Bold : FontWeight.Normal)
-            .fontColor(this.currentType === 1
-              ? $r('sys.color.ohos_id_color_text_primary')
-              : $r('sys.color.ohos_id_color_text_secondary'))
+        // 新建歌单按钮
+        Button({ type: ButtonType.Circle }) {
+          SymbolGlyph($r('sys.symbol.plus'))
+            .fontSize(20)
+            .fontColor([$r('sys.color.ohos_id_color_emphasize')])
         }
-        .padding({ left: 12, right: 12, top: 4, bottom: 4 })
-        .borderRadius(8)
+        .buttonStyle(ButtonStyleMode.NORMAL)
+        .width(32)
+        .height(32)
         .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 1.0 })
-        .onClick(() => { this.onToggle(1) })
+        .onClick(() => { this.openCreateDialog() })
       }
       .width('100%')
+      .alignItems(VerticalAlign.Center)
       .padding({ left: 16, top: 16, right: 16, bottom: 10 })
 
       Divider()
@@ -151,7 +213,7 @@ export struct PlaylistSection {
 
       // === 歌单列表 / 空状态 ===
       if (this.playlists.length === 0) {
-        Text(this.currentType === 0 ? '暂无自建歌单' : '暂无收藏歌单')
+        Text('暂无歌单')
           .fontSize(14)
           .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
           .width('100%')
@@ -162,22 +224,44 @@ export struct PlaylistSection {
           ForEach(this.playlists, (playlist: PlaylistRow) => {
             ListItem() {
               Row() {
-                // 第一首歌封面
-                Image(this.getCover(playlist.playlistId))
+                // 封面
+                Image(this.getCover(playlist))
                   .width(44)
                   .height(44)
                   .borderRadius(6)
                   .objectFit(ImageFit.Cover)
 
-                // 歌单名称 + 歌曲数量
+                // 歌单信息
                 Column({ space: 4 }) {
-                  Text(playlist.title)
-                    .fontSize(15)
-                    .fontColor($r('sys.color.ohos_id_color_text_primary'))
-                    .maxLines(1)
-                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  Row({ space: 6 }) {
+                    Text(playlist.title)
+                      .fontSize(15)
+                      .fontColor($r('sys.color.ohos_id_color_text_primary'))
+                      .maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      .constraintSize({ maxWidth: 180 })
 
-                  Text(`${playlist.songIds.length}首`)
+                    // 类型标签
+                    if (playlist.playlistType === 1) {
+                      Text('收藏')
+                        .fontSize(10)
+                        .fontColor(Color.White)
+                        .padding({ left: 6, right: 6, top: 1, bottom: 1 })
+                        .borderRadius(4)
+                        .backgroundColor(SOURCE_COLORS[playlist.source] || '#999')
+                    } else {
+                      Text('自建')
+                        .fontSize(10)
+                        .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+                        .padding({ left: 6, right: 6, top: 1, bottom: 1 })
+                        .borderRadius(4)
+                        .backgroundColor($r('sys.color.ohos_id_color_click_effect'))
+                    }
+                  }
+
+                  Text(playlist.playlistType === 1
+                    ? (playlist.author || '收藏歌单')
+                    : `${playlist.songIds.length}首`)
                     .fontSize(13)
                     .fontColor($r('sys.color.ohos_id_color_text_tertiary'))
                 }
@@ -197,19 +281,15 @@ export struct PlaylistSection {
                 this.onPlaylistTap(playlist)
               })
             }
-            // 左滑删除（自建歌单和收藏歌单都支持）
             .swipeAction({
               end: {
                 builder: () => {
-                  // 使用局部变量捕获当前 playlist，避免闭包捕获错误
-                  const currentPlaylist = playlist
-                  this.pendingDeleteId = currentPlaylist.playlistId
-                  this.swipeTrashBuilder()
+                  this.swipeTrashBuilder(playlist)
                 }
               },
               edgeEffect: SwipeEdgeEffect.Spring
             })
-          }, (playlist: PlaylistRow) => playlist.playlistId.toString())
+          }, (playlist: PlaylistRow) => `${playlist.playlistType}_${playlist.playlistId}`)
         }
         .width('100%')
         .divider({ strokeWidth: 0.5, color: '#1A000000', startMargin: 66, endMargin: 12 })

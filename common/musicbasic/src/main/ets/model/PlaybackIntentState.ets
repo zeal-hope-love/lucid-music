@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+import { SongItem } from './SongData';
+
 /**
  * Cross-feature playback request (AppStorageV2: PlaybackIntentState).
  * View models only bump this; the shell listens and writes {@link MusicAppState} and media.
@@ -21,8 +23,8 @@
 export class PlaybackIntentState {
   /** Incremented on each intent so the shell reacts even when the song id is unchanged. */
   @Trace public requestVersion: number = 0;
-  /** Song id to play, matching {@link MusicAppState.playQueueIds}; -1 when unset. */
-  @Trace public pendingPlaySongId: number = -1;
+  /** Index into the current {@link MusicAppState.playQueue} to switch to; -1 when unset. */
+  @Trace public pendingPlayIndex: number = -1;
   /** When true, the shell should present full-screen player UI. */
   @Trace public openPlayerUi: boolean = false;
   /** Remote audio URL (non-empty signals remote playback via audio source). */
@@ -35,10 +37,16 @@ export class PlaybackIntentState {
   @Trace public remoteSongCover: string = '';
   /** Remote song lyric text (LRC format). */
   @Trace public remoteLyricText: string = '';
-  /** Pending new queue song IDs (set when switching queues). */
-  @Trace public pendingQueueIds: number[] = [];
+  /** Remote source platform identifier (e.g. 'wy', 'tx'); needed for disk cache key. */
+  @Trace public remotePlatform: string = '';
+  /** Remote song ID on the source platform; needed for disk cache key. */
+  @Trace public remoteSongId: string = '';
+  /** Pending new queue (full song objects; set when switching queues). */
+  @Trace public pendingQueue: SongItem[] = [];
   /** Pending select index in the new queue. */
   @Trace public pendingSelectIndex: number = 0;
+  /** Pending playlist title for the new queue (shown in the playback sheet). */
+  @Trace public pendingPlaylistTitle: string = '';
 
   /** Reset remote-playback fields after consumption. */
   public resetRemote(): void {
@@ -47,5 +55,7 @@ export class PlaybackIntentState {
     this.remoteSongSinger = '';
     this.remoteSongCover = '';
     this.remoteLyricText = '';
+    this.remotePlatform = '';
+    this.remoteSongId = '';
   }
 }

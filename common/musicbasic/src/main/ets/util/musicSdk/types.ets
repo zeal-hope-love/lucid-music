@@ -7,7 +7,11 @@
 
 // MusicPlatform 引用的外部类型（从源文件导入，避免经 musicbasic barrel 形成循环依赖）
 import type { PlayUrlResult } from './wy/utils/crypto'
-import type { MusichallPlaylistItem, TagFilterGroup } from '../../data/MusichallPlaylistItem'
+import type { MusichallPlaylistItem, TagFilterGroup, MusichallPlaylistPage } from '../../data/MusichallPlaylistItem'
+import type { PlaylistDetailResult } from '../../data/PlaylistDetailResult'
+
+// 重新导出供平台 songList.ets 使用
+export type { PlaylistDetailResult }
 
 // ===== 共享音质类型 =====
 export interface QualityType {
@@ -170,9 +174,9 @@ export class MusicPlatform {
   getPlayUrl!: (songId: string, rawFields: Record<string, Object>) => Promise<PlayUrlResult>
   getPic!: (songInfo: Record<string, Object>) => Promise<string>
   getMusicDetailPageUrl!: (songInfo: Record<string, Object>) => string
-  getPlaylists!: (cat: string, page: number, limit: number) => Promise<Array<MusichallPlaylistItem>>
+  getPlaylists!: (cat: string, page: number, limit: number, order?: string) => Promise<MusichallPlaylistPage>
   getPlaylistTags!: () => Promise<Array<TagFilterGroup>>
-  getPlaylistSongs!: (playlistId: string, page: number, limit: number) => Promise<SearchResult>
+  getPlaylistSongs!: (playlistId: string, page: number, limit: number) => Promise<PlaylistDetailResult>
   getBoards!: () => BoardListResult
   getLeaderboardList!: (bangid: string, page: number, limit: number) => Promise<SearchResult>
   getLeaderboardDetailPageUrl!: (id: string) => string

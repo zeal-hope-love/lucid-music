@@ -3,6 +3,7 @@
  */
 import { AreaWithHdsTabBar } from 'musicbasic'
 import { AudioSourceSection } from './AudioSourceSection'
+import { CacheSection } from './CacheSection'
 
 @ComponentV2
 export struct SettingsPage {
@@ -62,6 +63,16 @@ export struct SettingsPage {
 
           // 音源选择列表（内部含管理按钮 + bindSheet）
           AudioSourceSection()
+
+          // --- 缓存（与"自定义音源"同款标题，下方留间距） ---
+          Text('缓存')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('sys.color.ohos_id_color_text_primary'))
+            .width('100%')
+            .padding({ left: 4, bottom: 12, top: 28 })
+
+          CacheSection()
         }
         .width('90%')
         .padding({ top: 0 })

@@ -178,10 +178,9 @@ export struct MusicInfoComponent {
           if (!songItem) {
             return
           }
-          const songId = songItem.id
-          const nowFav = MusicDbApi.getInstance().toggleFavorite(songId)
+          const nowFav = MusicDbApi.getInstance().toggleFavorite(songItem)
           this.isFavorite = nowFav
-          AVSessionController.getInstance().updateFavoriteState(songId.toString(), nowFav)
+          AVSessionController.getInstance().updateFavoriteState(songItem.id.toString(), nowFav)
         })
     }
     .width('100%')

@@ -26,7 +26,9 @@ const songList: SongItem[] = [
     lyric: 'lrcfiles/DreamItPossible.lrc',
     isDarkBackground: true,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 2,
@@ -39,7 +41,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: false,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 3,
@@ -52,7 +56,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: true,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 4,
@@ -65,7 +71,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: true,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 5,
@@ -78,7 +86,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: false,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 6,
@@ -91,7 +101,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: true,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 7,
@@ -104,7 +116,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: true,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 8,
@@ -117,7 +131,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: false,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 9,
@@ -130,7 +146,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: false,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   },
   {
     id: 10,
@@ -143,7 +161,9 @@ const songList: SongItem[] = [
     lyric: '',
     isDarkBackground: false,
     coverUrl: '',
-    lyricText: ''
+    lyricText: '',
+    platform: '',
+    remoteSongId: ''
   }
 ]
 

@@ -7,12 +7,17 @@ import { Logger } from 'musicbasic'
 import { platformToId } from './utils'
 import { apis } from './api-source'
 import type { SearchResult, SuggestionItem, CommentResult, BoardListResult } from './types'
-import type { PlayUrlResult, MusichallPlaylistItem, TagFilterGroup } from 'musicbasic'
+import type { PlayUrlResult, MusichallPlaylistItem, TagFilterGroup, PlaylistDetailResult } from 'musicbasic'
+import { MusichallPlaylistPage, PlaylistMeta } from 'musicbasic'
 
 const TAG = 'ApiSource'
 
 function emptyResult(source: string, limit: number): SearchResult {
   return { list: [], allPage: 1, limit, total: 0, source }
+}
+
+function emptyDetailResult(source: string, limit: number): PlaylistDetailResult {
+  return { list: [], allPage: 1, limit, total: 0, source, info: new PlaylistMeta() }
 }
 
 export class ApiSource {
@@ -108,19 +113,27 @@ export class ApiSource {
   }
 
   // ===== 歌单列表 =====
-  public static async getPlaylists(platform: string, cat: string = '全部', page: number = 0, limit: number = 30): Promise<MusichallPlaylistItem[]> {
+  public static async getPlaylists(platform: string, cat: string = '全部', page: number = 0, limit: number = 30, order?: string): Promise<MusichallPlaylistPage> {
+    const mapped = platformToId(platform)
+    Logger.info(TAG, `getPlaylists enter | platform=${platform} | mapped=${mapped} | cat=${cat} | page=${page} | limit=${limit} | order=${order ?? ''}`)
     try {
-      return await apis(platformToId(platform)).getPlaylists(cat, page, limit)
+      const result = await apis(mapped).getPlaylists(cat, page, limit, order)
+      Logger.info(TAG, `getPlaylists result | platform=${platform} | count=${result?.items?.length ?? 0} | hasMore=${result?.hasMore ?? false}`)
+      return result
     } catch (e) {
       Logger.error(TAG, `getPlaylists err: ${JSON.stringify(e)}`)
-      return []
+      return new MusichallPlaylistPage()
     }
   }
 
   // ===== 歌单分类标签 =====
   public static async getPlaylistTags(platform: string): Promise<TagFilterGroup[]> {
+    const mapped = platformToId(platform)
+    Logger.info(TAG, `getPlaylistTags enter | platform=${platform} | mapped=${mapped}`)
     try {
-      return await apis(platformToId(platform)).getPlaylistTags()
+      const result = await apis(mapped).getPlaylistTags()
+      Logger.info(TAG, `getPlaylistTags result | platform=${platform} | count=${result?.length ?? 0}`)
+      return result
     } catch (e) {
       Logger.error(TAG, `getPlaylistTags err: ${JSON.stringify(e)}`)
       return []
@@ -128,12 +141,13 @@ export class ApiSource {
   }
 
   // ===== 歌单内歌曲 =====
-  public static async getPlaylistSongs(platform: string, playlistId: string, page: number = 1, limit: number = 30): Promise<SearchResult> {
+  public static async getPlaylistSongs(platform: string, playlistId: string, page: number = 1, limit: number = 30): Promise<PlaylistDetailResult> {
     try {
       return await apis(platformToId(platform)).getPlaylistSongs(playlistId, page, limit)
     } catch (e) {
       Logger.error(TAG, `getPlaylistSongs err: ${JSON.stringify(e)}`)
-      return emptyResult(platformToId(platform), limit)
+      const msg = e instanceof Error ? e.message : JSON.stringify(e)
+      throw new Error(`歌单加载失败: ${msg}`)
     }
   }
 

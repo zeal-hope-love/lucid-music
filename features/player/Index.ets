@@ -24,7 +24,8 @@ export { SongItem as avSongItem } from 'musicbasic'
 export { SongDataSource } from 'musicbasic'
 
 // avplayer 常量
-export { PlayerConstants, MusicPlayMode, PlayModeSwitchList } from './src/main/ets/constants/PlayerConstants'
+export { PlayerConstants, PlayModeSwitchList } from './src/main/ets/constants/PlayerConstants'
+export { MusicPlayMode, PLAY_MODE_CYCLE_ORDER } from 'musicbasic'
 export { LyricScrollEffect, LyricTopPosition, LyricFile, Rectangle } from './src/main/ets/constants/LyricConst'
 export { BreakpointConstants } from './src/main/ets/constants/BreakpointConstants'
 export { StyleConstants } from './src/main/ets/constants/StyleConstants'

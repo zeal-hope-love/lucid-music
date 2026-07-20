@@ -17,20 +17,17 @@
  * Global observable playback state (AppStorageV2 key: MusicAppState).
  * Playback requests use {@link PlaybackIntentState} and are applied by the product shell, then media services.
  */
-import { SongDtoMapper } from '../api/SongDtoMapper';
 import { SongItem } from './SongData';
-import { MusicDbApi } from '../util/MusicDbApi';
+import { MusicPlayMode, PLAY_MODE_CYCLE_ORDER } from './PlayMode';
 
 @ObservedV2
 export class  MusicAppState {
-  /** Current queue: song ids only; rows resolved on demand via {@link MusicDbApi}. */
-  @Trace public playQueueIds: number[] = [];
-  /** Index in {@link playQueueIds} for the current track. */
+  /** Current queue: full song objects (local & remote treated equally). Single source of truth. */
+  @Trace public playQueue: SongItem[] = [];
+  /** Index in {@link playQueue} for the current track. */
   @Trace public selectIndex: number = 0;
   /** Whether audio is currently playing. */
   @Trace public isPlay: boolean = false;
-  /** Currently playing remote song info (set when source provides URL). */
-  @Trace public remoteSongItem: SongItem | null = null;
   /** Elapsed position for the progress bar (0..progressMax when known). */
   @Trace public progress: number = 0;
   /** Duration for the current track, or 0/1 when unknown. */
@@ -55,8 +52,10 @@ export class  MusicAppState {
   @Trace public playbackStatus: string = 'idle';
   /** 播放状态可读文本（如 "正在请求播放地址..."） */
   @Trace public playbackStatusMessage: string = '';
-  /** 播放模式: 0=单曲循环, 1=顺序, 2=随机 (aligns with MusicPlayMode enum). */
-  @Trace public playMode: number = 1;
+  /** 播放模式: 顺序 / 随机 / 单曲循环。由本类作为唯一可信源（强类型 MusicPlayMode）。 */
+  @Trace public playMode: MusicPlayMode = MusicPlayMode.ORDER;
+  /** 当前播放队列所属歌单标题（用于播放列表弹层展示；默认"最近播放"）。 */
+  @Trace public currentPlaylistTitle: string = '最近播放';
   /** 当前歌曲是否已收藏. */
   @Trace public isFavorite: boolean = false;
   /** 是否静音模式. */
@@ -65,33 +64,54 @@ export class  MusicAppState {
   @Trace public currentVolume: number = 100;
 
   /**
-   * Resolves a {@link SongItem} for the given queue index without keeping a full table in memory.
-   * @param queueIndex Index into playQueueIds.
+   * Returns the {@link SongItem} at the given queue index directly (O(1)).
+   * @param queueIndex Index into {@link playQueue}.
    * @returns A song item, or undefined if the index is out of range.
    */
   public resolveSongAtQueueIndex(queueIndex: number): SongItem | undefined {
-    const ids = this.playQueueIds;
-    if (queueIndex < 0 || queueIndex >= ids.length) {
+    if (queueIndex < 0 || queueIndex >= this.playQueue.length) {
       return undefined;
     }
-    const dto = MusicDbApi.getInstance().getSongById(ids[queueIndex]);
-    return dto !== undefined ? SongDtoMapper.toSongItem(dto) : undefined;
+    return this.playQueue[queueIndex];
   }
 
   /**
    * @returns The item at {@link selectIndex}, or undefined.
    */
   public getCurrentSongItem(): SongItem | undefined {
-    if (this.remoteSongItem) {
-      return this.remoteSongItem;
+    if (this.selectIndex < 0 || this.selectIndex >= this.playQueue.length) {
+      return undefined;
     }
-    return this.resolveSongAtQueueIndex(this.selectIndex);
+    return this.playQueue[this.selectIndex];
   }
 
   /**
-   * @returns The length of playQueueIds.
+   * @returns The length of {@link playQueue}.
    */
   public getQueueLength(): number {
-    return this.playQueueIds.length;
+    return this.playQueue.length;
+  }
+
+  /**
+   * 设置播放模式并同步到 AppStorage V1（供 V1 组件 @StorageLink('playMode') 消费）。
+   * 本类为播放模式的唯一可信源。
+   * @param mode 目标模式
+   */
+  public setPlayMode(mode: MusicPlayMode): void {
+    this.playMode = mode;
+    AppStorage.setOrCreate('playMode', mode);
+  }
+
+  /**
+   * 按 {@link PLAY_MODE_CYCLE_ORDER} 推进到下一播放模式，并同步到 V1。
+   * UI 切换与 AVSession 回调统一走这里，避免切换顺序分散。
+   * @returns 切换后的新模式
+   */
+  public cyclePlayMode(): MusicPlayMode {
+    const order = PLAY_MODE_CYCLE_ORDER;
+    const idx = order.indexOf(this.playMode);
+    const next = order[(idx + 1) % order.length];
+    this.setPlayMode(next);
+    return next;
   }
 }

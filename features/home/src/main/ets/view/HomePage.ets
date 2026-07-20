@@ -35,11 +35,12 @@ export struct HomePage {
       SearchInputArea({
         barWidth: Math.floor(this.screenWidth * 0.75),
         placeholder: '搜歌曲、歌手、专辑',
+        isFollow: true,
         onTap: (): void => {
           this.getUIContext().animateTo({
             curve: curves.interpolatingSpring(0, 1, 342, 38)
           }, () => {
-            this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.SEARCH, undefined), { animated: false })
+            this.navPathStack.pushPath(new NavPathInfo(RouterUrlConstants.SEARCH, undefined), false)
           })
         }
       })
@@ -52,6 +53,5 @@ export struct HomePage {
     .width('100%')
     .height('100%')
     .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
-    .padding({ bottom: 160 })
   }
 }

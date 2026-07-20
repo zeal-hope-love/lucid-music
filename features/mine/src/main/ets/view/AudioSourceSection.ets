@@ -80,7 +80,6 @@ export struct AudioSourceSection {
   @Local selectedId: string = ''
   @Local initStatusList: InitStatusEntry[] = []
   @Local isSheetShow: boolean = false
-  @Local pendingDeleteId: string = ''
   private manager: AudioSourceManager = AudioSourceManager.getInstance()
   private dialogController: CustomDialogController | null = null
 
@@ -249,7 +248,7 @@ export struct AudioSourceSection {
   // ==================== 左滑删除 Builder ====================
 
   @Builder
-  swipeTrashBuilder(): void {
+  swipeTrashBuilder(id: string): void {
     Button({ type: ButtonType.Circle }) {
       SymbolGlyph($r('sys.symbol.trash_fill'))
         .fontSize(20)
@@ -259,7 +258,7 @@ export struct AudioSourceSection {
     .width(44)
     .height(44)
     .margin({ right: 12 })
-    .onClick(() => { this.onDelete(this.pendingDeleteId) })
+    .onClick(() => { this.onDelete(id) })
   }
 
   // ==================== Sheet 内容 Builder ====================
@@ -340,8 +339,8 @@ export struct AudioSourceSection {
             .swipeAction({
               end: {
                 builder: () => {
-                  this.pendingDeleteId = item.id
-                  this.swipeTrashBuilder()
+                  // 通过闭包参数直接传入当前项的 item.id，避免共享状态被覆盖
+                  this.swipeTrashBuilder(item.id)
                 }
               },
               edgeEffect: SwipeEdgeEffect.Spring
@@ -363,14 +362,21 @@ export struct AudioSourceSection {
   @Builder
   sourceRadioList(): void {
     Column() {
+      // 音源管理按钮（纳入卡片内，与其他设置区块统一，宽度 90%）
       Button('音源管理')
         .buttonStyle(ButtonStyleMode.NORMAL)
         .type(ButtonType.ROUNDED_RECTANGLE)
-        .width('100%')
-        .height(44)
+        .width('90%')
+        .height(40)
         .fontSize(15)
-        .margin({ bottom: 12 })
+        .alignSelf(ItemAlign.Center)
+        .margin({ top: 12, bottom: 12 })
         .onClick(() => { this.isSheetShow = true })
+
+      Divider()
+        .strokeWidth(0.5)
+        .color('#1A000000')
+        .margin({ left: 16, right: 16 })
 
       Column() {
         ForEach(this.sources, (item: AudioSourceModel) => {
@@ -406,9 +412,9 @@ export struct AudioSourceSection {
         .onClick(() => { this.onSelect(item.id) })
           }, (item: AudioSourceModel) => item.id)
       }
-      .borderRadius(14)
-      .backgroundColor($r('sys.color.comp_background_list_card'))
     }
+    .borderRadius(14)
+    .backgroundColor($r('sys.color.comp_background_list_card'))
     .bindSheet($$this.isSheetShow, this.sheetContent, {
       detents: [SheetSize.MEDIUM],
       showClose: true,

@@ -31,6 +31,7 @@ export struct ControlAreaComponent {
   @StorageLink('imageColor') imageColor: string = '';
   @StorageLink('pageShowTime') pageShowTime: number = 0;
   @StorageLink('songList') songList: SongItem[] = [];
+  @StorageLink('currentPlaylistTitle') currentPlaylistTitle: string = '最近播放';
   @State isShowPlayList: boolean = false;
   @StorageLink('playMode') @Watch('syncPlayModeIndex') playMode: MusicPlayMode = PlayModeSwitchList[this.playModeIndex];
   @StorageLink('selectIndex') selectIndex: number = 0;
@@ -67,20 +68,14 @@ export struct ControlAreaComponent {
   }
 
   switchPlayMode() {
-    if (this.playModeIndex === PlayModeSwitchList.length - 1) {
-      this.playModeIndex = 0;
-    } else {
-      this.playModeIndex++;
-    }
-    this.playMode = PlayModeSwitchList[this.playModeIndex];
+    const next = this.playerController.cyclePlayMode();
     this.promptAction.openToast({
-      message: `${this.playMode === MusicPlayMode.ORDER ?
+      message: `${next === MusicPlayMode.ORDER ?
         this.resourceConversion.getStringValueFromResource($r('app.string.sequential_playback')) :
-        this.playMode === MusicPlayMode.RANDOM ?
+        next === MusicPlayMode.RANDOM ?
           this.resourceConversion.getStringValueFromResource($r('app.string.random_playback')) :
           this.resourceConversion.getStringValueFromResource($r('app.string.single_playback'))}`
     });
-    this.playerController.setPlayMode(this.playMode);
   }
 
   build() {
@@ -186,7 +181,7 @@ export struct ControlAreaComponent {
           .fontSize(20).renderingStrategy(SymbolRenderingStrategy.SINGLE).fontColor([Color.White]).opacity(0.5)
           .onClick(() => { this.isShowPlayList = true; })
           .bindSheet($$this.isShowPlayList, this.musicListBuilder(), {
-            detents: [SheetSize.MEDIUM], dragBar: false, showClose: true, preferType: SheetType.CENTER,
+            detents: [SheetSize.MEDIUM], dragBar: false, showClose: false, preferType: SheetType.CENTER,
             onWillAppear: () => { this.scroller.scrollToIndex(this.selectIndex, false, ScrollAlign.CENTER); }
           })
       }
@@ -196,30 +191,73 @@ export struct ControlAreaComponent {
 
   @Builder musicListBuilder() {
     Column() {
-      this.playListTitle();
-      List({ scroller: this.scroller }) {
-        LazyForEach(new SongDataSource(this.songList), (item: SongItem, index: number) => {
-          ListItem() {
-            MusicListContainer({ item: item, index: index })
-              .reuseId(`song_${item.id}`);
-          }
-        }, (item: SongItem, index: number) => item.toString() + index.toString())
+      // 标题栏（对齐控制栏 MiniPlayerBar.playlistSheetBuilder）
+      Row() {
+        Text(this.currentPlaylistTitle)
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('sys.color.font_primary'))
+        Blank()
+        Text(`${this.songList.length} 首`)
+          .fontSize(13)
+          .fontColor($r('sys.color.font_secondary'))
       }
-      .height(StyleConstants.FULL_HEIGHT).width(StyleConstants.FULL_WIDTH)
-      .backgroundColor(Color.White).margin({ top: $r('app.float.list_area_margin_top') })
-      .lanes(this.currentBreakpoint === BreakpointConstants.BREAKPOINT_LG ?
-        ContentConstants.COL_TWO : ContentConstants.COL_ONE)
-      .layoutWeight(1)
-      .divider({
-        color: $r('app.color.list_divider'), strokeWidth: $r('app.float.stroke_width'),
-        startMargin: $r('app.float.list_item_padding'), endMargin: $r('app.float.list_item_padding')
-      })
+      .width('100%')
+      .padding({ left: 20, right: 20, top: 16, bottom: 8 })
+
+      Divider().strokeWidth(0.5).color('#1A000000')
+
+      // 歌曲列表
+      if (this.songList.length > 0) {
+        List({ scroller: this.scroller }) {
+          LazyForEach(new SongDataSource(this.songList), (item: SongItem, index: number) => {
+            ListItem() {
+              Row() {
+                Column({ space: 4 }) {
+                  Text(item.title as string)
+                    .fontSize(15)
+                    .fontWeight(this.selectIndex === index ? FontWeight.Bold : FontWeight.Medium)
+                    .fontColor($r('sys.color.ohos_id_color_text_primary'))
+                    .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+                  Text(item.singer as string)
+                    .fontSize(13)
+                    .fontColor($r('sys.color.ohos_id_color_text_secondary'))
+                    .textOverflow({ overflow: TextOverflow.Ellipsis }).maxLines(1)
+                }
+                .alignItems(HorizontalAlign.Start).layoutWeight(1)
+
+                if (this.selectIndex === index && this.isPlay) {
+                  SymbolGlyph($r('sys.symbol.play_fill'))
+                    .fontSize(18)
+                    .fontColor([$r('sys.color.ohos_id_color_text_primary')])
+                }
+              }
+              .width('100%')
+              .padding({ left: 20, right: 20, top: 14, bottom: 14 })
+              .onClick(() => {
+                this.playerController.switchToIndex(index)
+              })
+            }
+          }, (item: SongItem, index: number) => item.toString() + index.toString())
+        }
+        .width('100%').layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .listDirection(Axis.Vertical)
+        .divider({ strokeWidth: 0.5, color: '#1A000000', startMargin: 20, endMargin: 20 })
+      } else {
+        Column() {
+          Text('播放列表为空')
+            .fontSize(14)
+            .fontColor($r('sys.color.font_secondary'))
+            .margin({ top: 40 })
+        }
+        .width('100%').layoutWeight(1)
+      }
     }
-    .padding({
-      top: this.currentBreakpoint === BreakpointConstants.BREAKPOINT_SM ? 0 : $r('app.float.list_area_padding_top'),
-      bottom: $r('app.float.list_area_padding_bottom')
-    })
-    .backgroundColor(Color.White)
+    .width('100%')
+    .height('100%')
+    .backgroundColor($r('sys.color.ohos_id_color_sub_background'))
+    .borderRadius({ topLeft: 20, topRight: 20 })
   }
 
   @Builder volumeBuilder() {
@@ -297,63 +335,6 @@ export struct ControlAreaComponent {
     .height($r('app.float.play_all_area_height')).width(StyleConstants.FULL_WIDTH).backgroundColor(Color.White)
     .padding({ top: 18, left: $r('app.float.play_all_area_padding'), right: $r('app.float.play_all_area_padding') })
     .borderRadius({ topRight: $r('app.float.play_all_border_radius'), topLeft: $r('app.float.play_all_border_radius') })
-  }
-
-  @Builder playListTitle() {
-    Row() {
-      Text($r('app.string.play_list', this.songList.length))
-        .maxLines(ContentConstants.PLAY_ALL_MAX_LINES).padding({ left: $r('app.float.play_all_text_padding') })
-        .fontColor(Color.Black).fontWeight(FontWeight.Bold)
-        .fontSize(new BreakpointType({
-          sm: $r('app.float.play_font_sm'), md: $r('app.float.play_font_md'), lg: $r('app.float.play_font_lg')
-        }).getValue(this.currentBreakpoint))
-    }
-    .height($r('app.float.play_all_area_height')).width(StyleConstants.FULL_WIDTH).backgroundColor(Color.White)
-    .padding({ top: 18, left: $r('app.float.play_all_area_padding'), right: $r('app.float.play_all_area_padding') })
-    .borderRadius({ topRight: $r('app.float.play_all_border_radius'), topLeft: $r('app.float.play_all_border_radius') })
-    .position({ x: 0, y: 0 })
-  }
-}
-
-@Reusable
-@Component
-struct MusicListContainer {
-  @StorageLink('isPlay') isPlay: boolean = false;
-  @StorageProp('currentBreakpoint') currentBreakpoint: string = BreakpointConstants.BREAKPOINT_SM;
-  @StorageLink('selectIndex') selectIndex: number = 0;
-  item: SongItem | undefined = undefined;
-  index: number | undefined = undefined;
-
-  build() {
-    Column() {
-      Row() {
-        Column() {
-          Text(this.item!.title)
-            .fontColor(this.selectIndex === this.index && this.isPlay ? Color.Red : Color.Black)
-            .fontSize(new BreakpointType({
-              sm: $r('app.float.item_font_sm'), md: $r('app.float.item_font_md'), lg: $r('app.float.item_font_lg')
-            }).getValue(this.currentBreakpoint))
-            .margin({ bottom: $r('app.float.list_item_title_margin') })
-          Row() {
-            Image(this.item!.mark)
-              .width($r('app.float.list_item_image_size')).height($r('app.float.list_item_image_size'))
-              .margin({ right: $r('app.float.list_item_image_margin') })
-            Text(this.item!.singer)
-              .opacity($r('app.float.singer_opacity'))
-              .fontColor(this.selectIndex === this.index && this.isPlay ? Color.Red : Color.Black)
-              .fontSize(new BreakpointType({
-                sm: $r('app.float.singer_title_sm'), md: $r('app.float.singer_title_md'), lg: $r('app.float.singer_title_lg')
-              }).getValue(this.currentBreakpoint))
-          }
-        }
-        .alignItems(HorizontalAlign.Start)
-      }
-      .onClick(() => {
-        AudioPlayerController.getInstance().switchToIndex(this.index!)
-      })
-      .height($r('app.float.list_item_height')).width(StyleConstants.FULL_WIDTH)
-    }
-    .padding({ left: $r('app.float.list_item_padding'), right: $r('app.float.list_item_padding') })
   }
 }
 

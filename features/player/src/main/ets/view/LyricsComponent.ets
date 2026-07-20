@@ -178,10 +178,10 @@ export struct LyricsComponent {
             .opacity(0.86)
             .geometryTransition('PLAYBACK_FAVORITE_TRANSITION', { follow: this.follow })
             .onClick(() => {
-              const songId = this.songList[this.selectIndex].id
-              const nowFav = MusicDbApi.getInstance().toggleFavorite(songId)
+              const songItem = this.songList[this.selectIndex]
+              const nowFav = MusicDbApi.getInstance().toggleFavorite(songItem)
               this.isFavorite = nowFav
-              AVSessionController.getInstance().updateFavoriteState(songId.toString(), nowFav)
+              AVSessionController.getInstance().updateFavoriteState(songItem.id.toString(), nowFav)
             })
         }
         .width(StyleConstants.FULL_WIDTH)
